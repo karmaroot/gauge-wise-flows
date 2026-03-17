@@ -14,16 +14,368 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          observation_id: string | null
+          report_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          observation_id?: string | null
+          report_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          observation_id?: string | null
+          report_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "indicator_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      indicator_reports: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string
+          id: string
+          indicator_id: string
+          institution_id: string
+          period_id: string
+          reported_value: number | null
+          status: Database["public"]["Enums"]["report_status"]
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          indicator_id: string
+          institution_id: string
+          period_id: string
+          reported_value?: number | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          indicator_id?: string
+          institution_id?: string
+          period_id?: string
+          reported_value?: number | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicator_reports_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indicator_reports_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indicator_reports_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indicators: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          indicator_type: Database["public"]["Enums"]["indicator_type"]
+          is_active: boolean
+          name: string
+          reporting_frequency: Database["public"]["Enums"]["reporting_frequency"]
+          target_value: number
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          is_active?: boolean
+          name: string
+          reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
+          target_value?: number
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          is_active?: boolean
+          name?: string
+          reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
+          target_value?: number
+          unit?: string
+        }
+        Relationships: []
+      }
+      institutions: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["institution_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type?: Database["public"]["Enums"]["institution_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["institution_type"]
+        }
+        Relationships: []
+      }
+      observation_responses: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          observation_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          observation_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          observation_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observation_responses_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "observations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      observations: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          report_id: string
+          status: Database["public"]["Enums"]["observation_status"]
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          report_id: string
+          status?: Database["public"]["Enums"]["observation_status"]
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          report_id?: string
+          status?: Database["public"]["Enums"]["observation_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observations_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "indicator_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periods: {
+        Row: {
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          status: Database["public"]["Enums"]["period_status"]
+        }
+        Insert: {
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          status?: Database["public"]["Enums"]["period_status"]
+        }
+        Update: {
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["period_status"]
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          institution_id: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          institution_id?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          institution_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "reviewer" | "informant"
+      indicator_type: "quantitative" | "qualitative"
+      institution_type: "public" | "private" | "autonomous"
+      observation_status: "open" | "answered" | "closed"
+      period_status: "open" | "closed"
+      report_status:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "observed"
+        | "responded"
+        | "approved"
+        | "rejected"
+      reporting_frequency: "monthly" | "quarterly" | "annually"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +502,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "reviewer", "informant"],
+      indicator_type: ["quantitative", "qualitative"],
+      institution_type: ["public", "private", "autonomous"],
+      observation_status: ["open", "answered", "closed"],
+      period_status: ["open", "closed"],
+      report_status: [
+        "draft",
+        "submitted",
+        "under_review",
+        "observed",
+        "responded",
+        "approved",
+        "rejected",
+      ],
+      reporting_frequency: ["monthly", "quarterly", "annually"],
+    },
   },
 } as const
