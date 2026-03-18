@@ -1,14 +1,16 @@
 import {
   LayoutDashboard, FileBarChart, ClipboardList, MessageSquare,
-  Building2, Users, Settings, Activity
+  Building2, Users, Settings, Activity, LogOut
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 
 const mainNav = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -28,6 +30,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
+  const { profile, signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   return (
@@ -90,7 +93,22 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 space-y-2">
+        {!collapsed && profile && (
+          <div className="px-2 py-1.5">
+            <p className="text-xs font-medium text-sidebar-foreground truncate">{profile.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{profile.email}</p>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size={collapsed ? 'icon' : 'sm'}
+          className="w-full text-muted-foreground hover:text-destructive"
+          onClick={signOut}
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span className="ml-2">Cerrar Sesión</span>}
+        </Button>
         {!collapsed && (
           <p className="text-[10px] text-muted-foreground text-center">SGVI v1.0</p>
         )}
