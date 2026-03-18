@@ -1,26 +1,46 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, MoreHorizontal } from 'lucide-react';
+import { Search, Pencil } from 'lucide-react';
 import { ROLE_LABELS } from '@/lib/constants';
 import { useProfiles } from '@/hooks/useSupabaseQuery';
+import { useUpdateUserRole, useUpdateProfile } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { UserEditDialog } from '@/components/dialogs/UserEditDialog';
 
 export default function UsersPage() {
   const { data: users, isLoading } = useProfiles();
+  const updateRole = useUpdateUserRole();
+  const updateProfile = useUpdateProfile();
+
   const [search, setSearch] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
 
   const filtered = (users ?? []).filter(u =>
     !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleSave = async (values: { id: string; name: string; institution_id: string | null; role: string }) => {
+    const currentRole = editing?.role;
+    await updateProfile.mutateAsync({ id: values.id, name: values.name, institution_id: values.institution_id });
+    if (values.role !== currentRole) {
+      await updateRole.mutateAsync({ userId: values.id, role: values.role as any });
+    }
+    setDialogOpen(false);
+  };
+
+  const openEdit = (u: any) => {
+    const role = u.user_roles?.[0]?.role ?? 'informant';
+    setEditing({ id: u.id, name: u.name, email: u.email, institution_id: u.institution_id, role });
+    setDialogOpen(true);
+  };
+
   return (
     <AppLayout>
-      <PageHeader title="Usuarios" description="Gestión de usuarios del sistema">
-        <Button><Plus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
-      </PageHeader>
+      <PageHeader title="Usuarios" description="Gestión de usuarios del sistema" />
 
       <div className="bg-card rounded-lg shadow-card">
         <div className="p-4 border-b">
@@ -39,7 +59,7 @@ export default function UsersPage() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Nombre</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Email</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Rol</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3"></th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -62,7 +82,9 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -72,6 +94,8 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      <UserEditDialog open={dialogOpen} onOpenChange={setDialogOpen} user={editing} onSave={handleSave} loading={updateProfile.isPending || updateRole.isPending} />
     </AppLayout>
   );
 }

@@ -1,25 +1,44 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { INDICATOR_TYPE_LABELS, FREQUENCY_LABELS } from '@/lib/constants';
 import { useIndicators } from '@/hooks/useSupabaseQuery';
+import { useCreateIndicator, useUpdateIndicator, useDeleteIndicator } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { IndicatorDialog } from '@/components/dialogs/IndicatorDialog';
+import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
 
 export default function Indicators() {
   const { data: indicators, isLoading } = useIndicators();
+  const createMut = useCreateIndicator();
+  const updateMut = useUpdateIndicator();
+  const deleteMut = useDeleteIndicator();
+
   const [search, setSearch] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const filtered = (indicators ?? []).filter(ind =>
     !search || ind.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleSave = (values: any) => {
+    if (values.id) {
+      updateMut.mutate(values, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      const { id, ...rest } = values;
+      createMut.mutate(rest, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
+
   return (
     <AppLayout>
       <PageHeader title="Indicadores" description="Gestión de indicadores institucionales">
-        <Button><Plus className="h-4 w-4 mr-2" />Nuevo Indicador</Button>
+        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Nuevo Indicador</Button>
       </PageHeader>
 
       <div className="bg-card rounded-lg shadow-card">
@@ -42,7 +61,7 @@ export default function Indicators() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Tipo</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Frecuencia</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-6 py-3">Estado</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3"></th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -59,7 +78,14 @@ export default function Indicators() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(ind); setDialogOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ind.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -68,6 +94,9 @@ export default function Indicators() {
           </div>
         )}
       </div>
+
+      <IndicatorDialog open={dialogOpen} onOpenChange={setDialogOpen} indicator={editing} onSave={handleSave} loading={createMut.isPending || updateMut.isPending} />
+      <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar indicador?" description="Se eliminará permanentemente este indicador." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
     </AppLayout>
   );
 }
