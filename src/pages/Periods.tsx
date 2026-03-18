@@ -1,17 +1,37 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreHorizontal } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { usePeriods } from '@/hooks/useSupabaseQuery';
+import { useCreatePeriod, useUpdatePeriod, useDeletePeriod } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PeriodDialog } from '@/components/dialogs/PeriodDialog';
+import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
 
 export default function Periods() {
   const { data: periods, isLoading } = usePeriods();
+  const createMut = useCreatePeriod();
+  const updateMut = useUpdatePeriod();
+  const deleteMut = useDeletePeriod();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const handleSave = (values: any) => {
+    if (values.id) {
+      updateMut.mutate(values, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      const { id, ...rest } = values;
+      createMut.mutate(rest, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
 
   return (
     <AppLayout>
       <PageHeader title="Periodos de Reporte" description="Gestión de periodos de evaluación">
-        <Button><Plus className="h-4 w-4 mr-2" />Nuevo Periodo</Button>
+        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Nuevo Periodo</Button>
       </PageHeader>
 
       <div className="bg-card rounded-lg shadow-card">
@@ -26,7 +46,7 @@ export default function Periods() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Inicio</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Fin</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-6 py-3">Estado</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3"></th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -41,7 +61,14 @@ export default function Periods() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setDialogOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(p.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -50,6 +77,9 @@ export default function Periods() {
           </div>
         )}
       </div>
+
+      <PeriodDialog open={dialogOpen} onOpenChange={setDialogOpen} period={editing} onSave={handleSave} loading={createMut.isPending || updateMut.isPending} />
+      <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar periodo?" description="Se eliminará permanentemente este periodo." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
     </AppLayout>
   );
 }
