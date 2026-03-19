@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, ArrowRight } from 'lucide-react';
 import { INSTITUTION_TYPE_LABELS } from '@/lib/constants';
 import { useInstitutions } from '@/hooks/useSupabaseQuery';
 import { useCreateInstitution, useUpdateInstitution, useDeleteInstitution } from '@/hooks/useSupabaseMutations';
