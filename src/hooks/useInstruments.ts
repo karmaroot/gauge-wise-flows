@@ -1,0 +1,176 @@
+import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+// --- Queries ---
+export function useInstruments(institutionId?: string) {
+  return useQuery({
+    queryKey: ['instruments', institutionId],
+    queryFn: async () => {
+      let query = supabase.from('instruments').select('*').order('name');
+      if (institutionId) query = query.eq('institution_id', institutionId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useInstrumentIndicators(instrumentId?: string) {
+  return useQuery({
+    queryKey: ['instrument-indicators', instrumentId],
+    enabled: !!instrumentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('instrument_indicators')
+        .select('*, instruments(name, institution_id), indicators(name, unit, target_value, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name, email), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name, email)')
+        .eq('instrument_id', instrumentId!)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useMyAssignments(userId?: string) {
+  return useQuery({
+    queryKey: ['my-assignments', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('instrument_indicators')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, unit, target_value, reporting_frequency)')
+        .or(`informant_id.eq.${userId},reviewer_id.eq.${userId}`)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useAllInstrumentIndicators() {
+  return useQuery({
+    queryKey: ['all-instrument-indicators'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('instrument_indicators')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, unit, target_value, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name)')
+        .eq('is_active', true)
+        .eq('auto_start', true)
+        .order('created_at');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// --- Mutations ---
+export function useCreateInstrument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { name: string; type: string; description?: string; institution_id: string; is_active?: boolean }) => {
+      const { error } = await supabase.from('instruments').insert(values);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instruments'] }); toast.success('Instrumento creado'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useUpdateInstrument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...values }: { id: string; name: string; type: string; description?: string; is_active?: boolean }) => {
+      const { error } = await supabase.from('instruments').update(values).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instruments'] }); toast.success('Instrumento actualizado'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useDeleteInstrument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('instruments').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instruments'] }); toast.success('Instrumento eliminado'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useCreateInstrumentIndicator() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { instrument_id: string; indicator_id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean }) => {
+      const { error } = await supabase.from('instrument_indicators').insert(values);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instrument-indicators'] }); toast.success('Indicador asignado'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useUpdateInstrumentIndicator() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...values }: { id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean }) => {
+      const { error } = await supabase.from('instrument_indicators').update(values).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instrument-indicators'] }); qc.invalidateQueries({ queryKey: ['all-instrument-indicators'] }); toast.success('Asignación actualizada'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useDeleteInstrumentIndicator() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('instrument_indicators').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['instrument-indicators'] }); toast.success('Asignación eliminada'); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// Auto-start: create reports for active instrument_indicators based on periodicity
+export function useAutoStartReports() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (assignments: Array<{ id: string; instrument_id: string; indicator_id: string; informant_id: string; instruments: any; indicators: any }>) => {
+      const now = new Date();
+      const openPeriods = await supabase.from('periods').select('*').eq('status', 'open');
+      if (openPeriods.error) throw openPeriods.error;
+      if (!openPeriods.data?.length) throw new Error('No hay periodos abiertos');
+
+      const period = openPeriods.data[0];
+      const inserts = assignments.map(a => ({
+        indicator_id: a.indicator_id,
+        institution_id: (a.instruments as any)?.institution_id,
+        period_id: period.id,
+        created_by: a.informant_id,
+        status: 'draft' as const,
+      }));
+
+      const { error } = await supabase.from('indicator_reports').insert(inserts);
+      if (error) throw error;
+
+      // Update last_started_at
+      for (const a of assignments) {
+        await supabase.from('instrument_indicators').update({ last_started_at: now.toISOString() }).eq('id', a.id);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['all-instrument-indicators'] });
+      toast.success('Reportes iniciados automáticamente');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
