@@ -30,7 +30,7 @@ interface Props {
 
 export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrumentId, indicators, profiles, onSave, loading }: Props) {
   const [form, setForm] = useState<AssignmentValues>({
-    instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false,
+    instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false, unit_area: '',
   });
 
   useEffect(() => {
