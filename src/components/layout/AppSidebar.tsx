@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 
 const mainNav = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+  { title: 'Bandeja', url: '/inbox', icon: Inbox },
   { title: 'Reportes', url: '/reports', icon: FileBarChart },
   { title: 'Indicadores', url: '/indicators', icon: Activity },
   { title: 'Observaciones', url: '/observations', icon: MessageSquare },
@@ -22,6 +23,7 @@ const mainNav = [
 const adminNav = [
   { title: 'Instituciones', url: '/institutions', icon: Building2 },
   { title: 'Periodos', url: '/periods', icon: ClipboardList },
+  { title: 'Inicio Automático', url: '/auto-start', icon: Zap },
   { title: 'Usuarios', url: '/users', icon: Users },
   { title: 'Configuración', url: '/settings', icon: Settings },
 ];

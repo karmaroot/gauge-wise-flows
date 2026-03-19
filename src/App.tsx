@@ -29,14 +29,17 @@ function ProtectedRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/inbox" element={<InboxPage />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/reports/:id" element={<ReportDetail />} />
       <Route path="/indicators" element={<Indicators />} />
       <Route path="/institutions" element={<Institutions />} />
+      <Route path="/institutions/:id" element={<InstitutionDetail />} />
       <Route path="/observations" element={<Observations />} />
       <Route path="/periods" element={<Periods />} />
       <Route path="/users" element={<UsersPage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/auto-start" element={<AutoStart />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
