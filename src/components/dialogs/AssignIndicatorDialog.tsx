@@ -14,6 +14,7 @@ interface AssignmentValues {
   reviewer_id: string;
   periodicity: string;
   auto_start: boolean;
+  unit_area: string;
 }
 
 interface Props {
