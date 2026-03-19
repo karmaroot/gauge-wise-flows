@@ -118,7 +118,7 @@ export function useCreateInstrumentIndicator() {
 export function useUpdateInstrumentIndicator() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...values }: { id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean }) => {
+    mutationFn: async ({ id, ...values }: { id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean; unit_area?: string }) => {
       const { error } = await supabase.from('instrument_indicators').update(values).eq('id', id);
       if (error) throw error;
     },

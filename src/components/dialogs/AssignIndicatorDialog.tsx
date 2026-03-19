@@ -101,6 +101,10 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <Label>Unidad / Área</Label>
+            <Input value={form.unit_area} onChange={e => set('unit_area', e.target.value)} placeholder="Ej: Dirección Financiera, Recursos Humanos..." />
+          </div>
           <div className="flex items-center gap-2">
             <Switch checked={form.auto_start} onCheckedChange={v => set('auto_start', v)} />
             <Label>Inicio automático por periodicidad</Label>
