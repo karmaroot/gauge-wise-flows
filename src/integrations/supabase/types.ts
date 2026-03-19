@@ -219,6 +219,7 @@ export type Database = {
           last_started_at: string | null
           periodicity: string
           reviewer_id: string
+          unit_area: string | null
         }
         Insert: {
           auto_start?: boolean
@@ -231,6 +232,7 @@ export type Database = {
           last_started_at?: string | null
           periodicity?: string
           reviewer_id: string
+          unit_area?: string | null
         }
         Update: {
           auto_start?: boolean
@@ -243,6 +245,7 @@ export type Database = {
           last_started_at?: string | null
           periodicity?: string
           reviewer_id?: string
+          unit_area?: string | null
         }
         Relationships: [
           {

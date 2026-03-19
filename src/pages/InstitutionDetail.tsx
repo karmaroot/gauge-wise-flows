@@ -158,6 +158,7 @@ export default function InstitutionDetail() {
                         <Badge variant="outline" className="text-[10px]">
                           {FREQUENCY_LABELS[a.periodicity as keyof typeof FREQUENCY_LABELS] ?? a.periodicity}
                         </Badge>
+                        {a.unit_area && <Badge variant="outline" className="text-[10px]">{a.unit_area}</Badge>}
                         {a.auto_start && <Badge className="text-[10px] bg-emerald-100 text-emerald-700">Auto-inicio</Badge>}
                       </div>
                     </div>

@@ -3,21 +3,28 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Pencil } from 'lucide-react';
+import { Search, Pencil, Plus } from 'lucide-react';
 import { ROLE_LABELS } from '@/lib/constants';
 import { useProfiles } from '@/hooks/useSupabaseQuery';
 import { useUpdateUserRole, useUpdateProfile } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserEditDialog } from '@/components/dialogs/UserEditDialog';
+import { CreateUserDialog } from '@/components/dialogs/CreateUserDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function UsersPage() {
   const { data: users, isLoading } = useProfiles();
   const updateRole = useUpdateUserRole();
   const updateProfile = useUpdateProfile();
+  const qc = useQueryClient();
 
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const filtered = (users ?? []).filter(u =>
     !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
@@ -32,6 +39,38 @@ export default function UsersPage() {
     setDialogOpen(false);
   };
 
+  const handleCreateUser = async (values: { email: string; password: string; name: string; role: string; institution_id: string | null }) => {
+    setCreating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke('create-user', {
+        body: { email: values.email, password: values.password, name: values.name },
+      });
+      if (res.error) throw new Error(res.error.message ?? 'Error al crear usuario');
+      if (res.data?.error) throw new Error(res.data.error);
+
+      const newUserId = res.data.user.id;
+
+      // Update profile with institution if provided
+      if (values.institution_id) {
+        await supabase.from('profiles').update({ institution_id: values.institution_id }).eq('id', newUserId);
+      }
+
+      // Update role if not default informant
+      if (values.role !== 'informant') {
+        await supabase.from('user_roles').update({ role: values.role as any }).eq('user_id', newUserId);
+      }
+
+      qc.invalidateQueries({ queryKey: ['profiles'] });
+      toast.success('Usuario creado exitosamente');
+      setCreateOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || 'Error al crear usuario');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const openEdit = (u: any) => {
     const role = u.user_roles?.[0]?.role ?? 'informant';
     setEditing({ id: u.id, name: u.name, email: u.email, institution_id: u.institution_id, role });
@@ -40,7 +79,9 @@ export default function UsersPage() {
 
   return (
     <AppLayout>
-      <PageHeader title="Usuarios" description="Gestión de usuarios del sistema" />
+      <PageHeader title="Usuarios" description="Gestión de usuarios del sistema">
+        <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
+      </PageHeader>
 
       <div className="bg-card rounded-lg shadow-card">
         <div className="p-4 border-b">
@@ -96,6 +137,7 @@ export default function UsersPage() {
       </div>
 
       <UserEditDialog open={dialogOpen} onOpenChange={setDialogOpen} user={editing} onSave={handleSave} loading={updateProfile.isPending || updateRole.isPending} />
+      <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} onSave={handleCreateUser} loading={creating} />
     </AppLayout>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE public.instrument_indicators ADD COLUMN unit_area text;

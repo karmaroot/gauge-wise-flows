@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { FREQUENCY_LABELS } from '@/lib/constants';
 
@@ -14,6 +15,7 @@ interface AssignmentValues {
   reviewer_id: string;
   periodicity: string;
   auto_start: boolean;
+  unit_area: string;
 }
 
 interface Props {
@@ -29,7 +31,7 @@ interface Props {
 
 export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrumentId, indicators, profiles, onSave, loading }: Props) {
   const [form, setForm] = useState<AssignmentValues>({
-    instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false,
+    instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false, unit_area: '',
   });
 
   useEffect(() => {
@@ -42,9 +44,10 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
         reviewer_id: assignment.reviewer_id,
         periodicity: assignment.periodicity,
         auto_start: assignment.auto_start ?? false,
+        unit_area: assignment.unit_area ?? '',
       });
     } else {
-      setForm({ instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false });
+      setForm({ instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false, unit_area: '' });
     }
   }, [assignment, open, instrumentId]);
 
@@ -97,6 +100,10 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
                 {Object.entries(FREQUENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label>Unidad / Área</Label>
+            <Input value={form.unit_area} onChange={e => set('unit_area', e.target.value)} placeholder="Ej: Dirección Financiera, Recursos Humanos..." />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={form.auto_start} onCheckedChange={v => set('auto_start', v)} />
