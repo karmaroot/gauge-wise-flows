@@ -9,10 +9,13 @@ import Reports from "./pages/Reports";
 import ReportDetail from "./pages/ReportDetail";
 import Indicators from "./pages/Indicators";
 import Institutions from "./pages/Institutions";
+import InstitutionDetail from "./pages/InstitutionDetail";
 import Observations from "./pages/Observations";
 import Periods from "./pages/Periods";
 import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
+import InboxPage from "./pages/Inbox";
+import AutoStart from "./pages/AutoStart";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
