@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, FileBarChart, ClipboardList, MessageSquare,
-  Building2, Users, Settings, Activity, LogOut
+  Building2, Users, Settings, Activity, LogOut, Inbox, Zap
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
