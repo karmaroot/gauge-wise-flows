@@ -106,7 +106,7 @@ export function useDeleteInstrument() {
 export function useCreateInstrumentIndicator() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { instrument_id: string; indicator_id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean }) => {
+    mutationFn: async (values: { instrument_id: string; indicator_id: string; informant_id: string; reviewer_id: string; periodicity: string; auto_start?: boolean; unit_area?: string }) => {
       const { error } = await supabase.from('instrument_indicators').insert(values);
       if (error) throw error;
     },
