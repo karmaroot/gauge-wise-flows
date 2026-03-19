@@ -62,6 +62,9 @@ export default function Institutions() {
               </span>
               <div className="flex items-center justify-between pt-3 border-t">
                 <p className="text-[10px] text-muted-foreground font-mono">{new Date(inst.created_at).toLocaleDateString('es')}</p>
+                <Button asChild variant="ghost" size="sm" className="text-xs">
+                  <Link to={`/institutions/${inst.id}`}>Instrumentos <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                </Button>
               </div>
             </div>
           ))}
