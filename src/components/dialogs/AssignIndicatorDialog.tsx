@@ -43,9 +43,10 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
         reviewer_id: assignment.reviewer_id,
         periodicity: assignment.periodicity,
         auto_start: assignment.auto_start ?? false,
+        unit_area: assignment.unit_area ?? '',
       });
     } else {
-      setForm({ instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false });
+      setForm({ instrument_id: instrumentId, indicator_id: '', informant_id: '', reviewer_id: '', periodicity: 'quarterly', auto_start: false, unit_area: '' });
     }
   }, [assignment, open, instrumentId]);
 
