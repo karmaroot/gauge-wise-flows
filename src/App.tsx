@@ -9,10 +9,13 @@ import Reports from "./pages/Reports";
 import ReportDetail from "./pages/ReportDetail";
 import Indicators from "./pages/Indicators";
 import Institutions from "./pages/Institutions";
+import InstitutionDetail from "./pages/InstitutionDetail";
 import Observations from "./pages/Observations";
 import Periods from "./pages/Periods";
 import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
+import InboxPage from "./pages/Inbox";
+import AutoStart from "./pages/AutoStart";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -26,14 +29,17 @@ function ProtectedRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/inbox" element={<InboxPage />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/reports/:id" element={<ReportDetail />} />
       <Route path="/indicators" element={<Indicators />} />
       <Route path="/institutions" element={<Institutions />} />
+      <Route path="/institutions/:id" element={<InstitutionDetail />} />
       <Route path="/observations" element={<Observations />} />
       <Route path="/periods" element={<Periods />} />
       <Route path="/users" element={<UsersPage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/auto-start" element={<AutoStart />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

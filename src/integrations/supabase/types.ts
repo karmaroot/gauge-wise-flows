@@ -207,6 +207,112 @@ export type Database = {
         }
         Relationships: []
       }
+      instrument_indicators: {
+        Row: {
+          auto_start: boolean
+          created_at: string
+          id: string
+          indicator_id: string
+          informant_id: string
+          instrument_id: string
+          is_active: boolean
+          last_started_at: string | null
+          periodicity: string
+          reviewer_id: string
+        }
+        Insert: {
+          auto_start?: boolean
+          created_at?: string
+          id?: string
+          indicator_id: string
+          informant_id: string
+          instrument_id: string
+          is_active?: boolean
+          last_started_at?: string | null
+          periodicity?: string
+          reviewer_id: string
+        }
+        Update: {
+          auto_start?: boolean
+          created_at?: string
+          id?: string
+          indicator_id?: string
+          informant_id?: string
+          instrument_id?: string
+          is_active?: boolean
+          last_started_at?: string | null
+          periodicity?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instrument_indicators_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instrument_indicators_informant_id_fkey"
+            columns: ["informant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instrument_indicators_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instrument_indicators_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instruments: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          institution_id: string
+          is_active: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution_id: string
+          is_active?: boolean
+          name: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution_id?: string
+          is_active?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instruments_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       observation_responses: {
         Row: {
           comment: string
