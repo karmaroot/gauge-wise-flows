@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,17 +7,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Inbox as InboxIcon, FileBarChart, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAssignments } from '@/hooks/useInstruments';
-import { useReports } from '@/hooks/useSupabaseQuery';
+import { useReports, usePeriods } from '@/hooks/useSupabaseQuery';
+import { useSubmitReport } from '@/hooks/useSupabaseMutations';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FREQUENCY_LABELS } from '@/lib/constants';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ReportIndicatorDialog } from '@/components/dialogs/ReportIndicatorDialog';
 
 export default function InboxPage() {
   const { user, userRole } = useAuth();
   const { data: assignments, isLoading } = useMyAssignments(user?.id);
   const { data: reports } = useReports();
+  const { data: periods } = usePeriods();
+  const submitReport = useSubmitReport();
+
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+
+  // Find active period (status=open and current date within range)
+  const now = new Date();
+  const activePeriod = (periods ?? []).find(p =>
+    p.status === 'open' && new Date(p.start_date) <= now && new Date(p.end_date) >= now
+  );
 
   const myAsInformant = (assignments ?? []).filter((a: any) => a.informant_id === user?.id);
   const myAsReviewer = (assignments ?? []).filter((a: any) => a.reviewer_id === user?.id);
@@ -29,9 +43,38 @@ export default function InboxPage() {
   const reviewIndicatorIds = new Set(myAsReviewer.map((a: any) => a.indicator_id));
   const reviewReports = (reports ?? []).filter(r => reviewIndicatorIds.has(r.indicator_id) && ['submitted', 'responded'].includes(r.status));
 
+  // Check if an assignment already has a report for the active period
+  function hasReportForPeriod(assignment: any) {
+    if (!activePeriod) return false;
+    return (reports ?? []).some(r =>
+      r.indicator_id === assignment.indicator_id &&
+      r.period_id === activePeriod.id
+    );
+  }
+
+  function handleOpenReport(assignment: any) {
+    setSelectedAssignment(assignment);
+    setReportDialogOpen(true);
+  }
+
+  function handleSubmitReport(values: any) {
+    if (!user) return;
+    submitReport.mutate(
+      { ...values, created_by: user.id },
+      { onSuccess: () => setReportDialogOpen(false) },
+    );
+  }
+
   return (
     <AppLayout>
       <PageHeader title="Bandeja de Entrada" description="Tus asignaciones y tareas pendientes" />
+
+      {activePeriod && (
+        <div className="mb-4 rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground">
+          Periodo activo: <span className="font-medium text-foreground">{activePeriod.name}</span>
+          {' '}({new Date(activePeriod.start_date).toLocaleDateString('es')} — {new Date(activePeriod.end_date).toLocaleDateString('es')})
+        </div>
+      )}
 
       <Tabs defaultValue="assignments" className="space-y-4">
         <TabsList>
@@ -47,26 +90,45 @@ export default function InboxPage() {
             <EmptyState icon={InboxIcon} title="Sin asignaciones" description="No tienes instrumentos/indicadores asignados." />
           ) : (
             <div className="space-y-3">
-              {(assignments ?? []).map((a: any) => (
-                <div key={a.id} className="bg-card rounded-lg shadow-card p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-foreground">{(a.indicators as any)?.name}</h4>
-                      <p className="text-xs text-muted-foreground">{(a.instruments as any)?.name} — {(a.instruments as any)?.institutions?.name}</p>
+              {(assignments ?? []).map((a: any) => {
+                const isInformant = a.informant_id === user?.id;
+                const alreadyReported = hasReportForPeriod(a);
+                const canReport = isInformant && activePeriod && !alreadyReported;
+
+                return (
+                  <div
+                    key={a.id}
+                    className={`bg-card rounded-lg shadow-card p-4 transition-colors ${canReport ? 'cursor-pointer hover:bg-muted/50 ring-1 ring-transparent hover:ring-primary/20' : ''}`}
+                    onClick={canReport ? () => handleOpenReport(a) : undefined}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">{(a.indicators as any)?.name}</h4>
+                        <p className="text-xs text-muted-foreground">{(a.instruments as any)?.name} — {(a.instruments as any)?.institutions?.name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {FREQUENCY_LABELS[a.periodicity as keyof typeof FREQUENCY_LABELS] ?? a.periodicity}
+                        </Badge>
+                        {isInformant && <Badge className="text-[10px] bg-blue-100 text-blue-700">Informante</Badge>}
+                        {a.reviewer_id === user?.id && <Badge className="text-[10px] bg-indigo-100 text-indigo-700">Revisor</Badge>}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {FREQUENCY_LABELS[a.periodicity as keyof typeof FREQUENCY_LABELS] ?? a.periodicity}
-                      </Badge>
-                      {a.informant_id === user?.id && <Badge className="text-[10px] bg-blue-100 text-blue-700">Informante</Badge>}
-                      {a.reviewer_id === user?.id && <Badge className="text-[10px] bg-indigo-100 text-indigo-700">Revisor</Badge>}
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Meta: {(a.indicators as any)?.target_value} {(a.indicators as any)?.unit}
+                      </span>
+                      {isInformant && (
+                        alreadyReported
+                          ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-600">Ya reportado</Badge>
+                          : activePeriod
+                            ? <Badge className="text-[10px] bg-primary/10 text-primary">Pendiente de reporte</Badge>
+                            : <Badge variant="outline" className="text-[10px]">Sin periodo activo</Badge>
+                      )}
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Meta: {(a.indicators as any)?.target_value} {(a.indicators as any)?.unit}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>
@@ -117,6 +179,16 @@ export default function InboxPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Report submission dialog */}
+      <ReportIndicatorDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        assignment={selectedAssignment}
+        activePeriod={activePeriod}
+        onSubmit={handleSubmitReport}
+        loading={submitReport.isPending}
+      />
     </AppLayout>
   );
 }
