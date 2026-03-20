@@ -94,11 +94,14 @@ export type Database = {
           comment: string | null
           created_at: string
           created_by: string
+          denominator: number | null
           id: string
           indicator_id: string
           institution_id: string
+          numerator: number | null
           period_id: string
           reported_value: number | null
+          reporting_month: string | null
           status: Database["public"]["Enums"]["report_status"]
           updated_at: string
         }
@@ -106,11 +109,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by: string
+          denominator?: number | null
           id?: string
           indicator_id: string
           institution_id: string
+          numerator?: number | null
           period_id: string
           reported_value?: number | null
+          reporting_month?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           updated_at?: string
         }
@@ -118,11 +124,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           created_by?: string
+          denominator?: number | null
           id?: string
           indicator_id?: string
           institution_id?: string
+          numerator?: number | null
           period_id?: string
           reported_value?: number | null
+          reporting_month?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           updated_at?: string
         }
