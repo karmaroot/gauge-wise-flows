@@ -38,9 +38,14 @@ export function useProfiles() {
   return useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*, user_roles(role)').order('name');
-      if (error) throw error;
-      return data;
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('*').order('name');
+      if (pErr) throw pErr;
+      const { data: roles, error: rErr } = await supabase.from('user_roles').select('user_id, role');
+      if (rErr) throw rErr;
+      return (profiles ?? []).map(p => ({
+        ...p,
+        user_roles: (roles ?? []).filter(r => r.user_id === p.id),
+      }));
     },
   });
 }
