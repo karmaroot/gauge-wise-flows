@@ -137,3 +137,41 @@ export function useUpdateProfile() {
     onError: (e: any) => toast.error(e.message),
   });
 }
+
+// --- Submit Report (informant submits indicator report) ---
+export function useSubmitReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      indicator_id: string;
+      institution_id: string;
+      period_id: string;
+      numerator: number;
+      denominator: number;
+      reported_value: number;
+      reporting_month: string;
+      comment: string;
+      created_by: string;
+    }) => {
+      const { error } = await supabase.from('indicator_reports').insert({
+        indicator_id: values.indicator_id,
+        institution_id: values.institution_id,
+        period_id: values.period_id,
+        numerator: values.numerator,
+        denominator: values.denominator,
+        reported_value: values.reported_value,
+        reporting_month: values.reporting_month,
+        comment: values.comment || null,
+        created_by: values.created_by,
+        status: 'submitted',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['my-assignments'] });
+      toast.success('Reporte enviado exitosamente');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
