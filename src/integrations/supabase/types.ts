@@ -165,6 +165,8 @@ export type Database = {
           description: string | null
           id: string
           indicator_type: Database["public"]["Enums"]["indicator_type"]
+          institution_id: string | null
+          instrument_id: string | null
           is_active: boolean
           name: string
           reporting_frequency: Database["public"]["Enums"]["reporting_frequency"]
@@ -176,6 +178,8 @@ export type Database = {
           description?: string | null
           id?: string
           indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          institution_id?: string | null
+          instrument_id?: string | null
           is_active?: boolean
           name: string
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
@@ -187,13 +191,30 @@ export type Database = {
           description?: string | null
           id?: string
           indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          institution_id?: string | null
+          instrument_id?: string | null
           is_active?: boolean
           name?: string
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
           target_value?: number
           unit?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "indicators_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indicators_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       institutions: {
         Row: {

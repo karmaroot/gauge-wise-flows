@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { INDICATOR_TYPE_LABELS, FREQUENCY_LABELS } from '@/lib/constants';
-import { useIndicators } from '@/hooks/useSupabaseQuery';
+import { useIndicators, useInstitutions } from '@/hooks/useSupabaseQuery';
+import { useInstruments } from '@/hooks/useInstruments';
 import { useCreateIndicator, useUpdateIndicator, useDeleteIndicator } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { IndicatorDialog } from '@/components/dialogs/IndicatorDialog';
@@ -13,6 +14,8 @@ import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
 
 export default function Indicators() {
   const { data: indicators, isLoading } = useIndicators();
+  const { data: institutions } = useInstitutions();
+  const { data: instruments } = useInstruments();
   const createMut = useCreateIndicator();
   const updateMut = useUpdateIndicator();
   const deleteMut = useDeleteIndicator();
@@ -25,6 +28,9 @@ export default function Indicators() {
   const filtered = (indicators ?? []).filter(ind =>
     !search || ind.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const institutionMap = Object.fromEntries((institutions ?? []).map(i => [i.id, i.name]));
+  const instrumentMap = Object.fromEntries((instruments ?? []).map(i => [i.id, i.name]));
 
   const handleSave = (values: any) => {
     if (values.id) {
@@ -56,6 +62,8 @@ export default function Indicators() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Nombre</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Institución</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Instrumento</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Unidad</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Meta</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Tipo</th>
@@ -65,9 +73,11 @@ export default function Indicators() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map((ind) => (
+                {filtered.map((ind: any) => (
                   <tr key={ind.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-foreground">{ind.name}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{ind.institution_id ? institutionMap[ind.institution_id] ?? '—' : '—'}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{ind.instrument_id ? instrumentMap[ind.instrument_id] ?? '—' : '—'}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{ind.unit}</td>
                     <td className="px-6 py-4 text-sm text-right font-medium text-foreground">{Number(ind.target_value)}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{INDICATOR_TYPE_LABELS[ind.indicator_type as keyof typeof INDICATOR_TYPE_LABELS]}</td>
@@ -95,7 +105,15 @@ export default function Indicators() {
         )}
       </div>
 
-      <IndicatorDialog open={dialogOpen} onOpenChange={setDialogOpen} indicator={editing} onSave={handleSave} loading={createMut.isPending || updateMut.isPending} />
+      <IndicatorDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        indicator={editing}
+        onSave={handleSave}
+        loading={createMut.isPending || updateMut.isPending}
+        institutions={institutions ?? []}
+        instruments={(instruments ?? []) as any}
+      />
       <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar indicador?" description="Se eliminará permanentemente este indicador." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
     </AppLayout>
   );
