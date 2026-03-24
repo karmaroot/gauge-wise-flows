@@ -65,7 +65,7 @@ export default function Indicators() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Institución</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Instrumento</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Unidad</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Meta</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Ponderación</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Tipo</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Frecuencia</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-6 py-3">Estado</th>
