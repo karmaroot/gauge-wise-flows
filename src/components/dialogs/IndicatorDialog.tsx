@@ -41,9 +41,9 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
 
   useEffect(() => {
     if (indicator) {
-      setForm({ ...indicator, target_value: Number(indicator.target_value) });
+      setForm({ ...indicator, target_value: Number(indicator.target_value), weight: Number(indicator.weight ?? 0) });
     } else {
-      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
+      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
     }
   }, [indicator, open]);
 
