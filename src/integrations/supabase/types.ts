@@ -172,6 +172,7 @@ export type Database = {
           reporting_frequency: Database["public"]["Enums"]["reporting_frequency"]
           target_value: number
           unit: string
+          weight: number
         }
         Insert: {
           created_at?: string
@@ -185,6 +186,7 @@ export type Database = {
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
           target_value?: number
           unit?: string
+          weight?: number
         }
         Update: {
           created_at?: string
@@ -198,6 +200,7 @@ export type Database = {
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
           target_value?: number
           unit?: string
+          weight?: number
         }
         Relationships: [
           {
