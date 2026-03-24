@@ -17,6 +17,8 @@ interface IndicatorValues {
   indicator_type: 'quantitative' | 'qualitative';
   reporting_frequency: 'monthly' | 'quarterly' | 'annually';
   is_active: boolean;
+  institution_id?: string | null;
+  instrument_id?: string | null;
 }
 
 interface Props {
@@ -25,23 +27,35 @@ interface Props {
   indicator?: IndicatorValues | null;
   onSave: (values: IndicatorValues) => void;
   loading?: boolean;
+  institutions?: Array<{ id: string; name: string }>;
+  instruments?: Array<{ id: string; name: string; institution_id: string }>;
 }
 
-export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading }: Props) {
+export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading, institutions = [], instruments = [] }: Props) {
   const [form, setForm] = useState<IndicatorValues>({
     name: '', description: '', unit: 'percentage', target_value: 0,
     indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true,
+    institution_id: null, instrument_id: null,
   });
 
   useEffect(() => {
     if (indicator) {
       setForm({ ...indicator, target_value: Number(indicator.target_value) });
     } else {
-      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true });
+      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
     }
   }, [indicator, open]);
 
   const set = (key: keyof IndicatorValues, value: any) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const handleInstitutionChange = (value: string) => {
+    const v = value === '__none__' ? null : value;
+    setForm(prev => ({ ...prev, institution_id: v, instrument_id: null }));
+  };
+
+  const filteredInstruments = form.institution_id
+    ? instruments.filter(i => i.institution_id === form.institution_id)
+    : instruments;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +76,32 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
           <div>
             <Label>Descripción</Label>
             <Textarea value={form.description ?? ''} onChange={e => set('description', e.target.value)} rows={2} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Institución</Label>
+              <Select value={form.institution_id ?? '__none__'} onValueChange={handleInstitutionChange}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar institución" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Sin institución —</SelectItem>
+                  {institutions.map(inst => (
+                    <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Instrumento</Label>
+              <Select value={form.instrument_id ?? '__none__'} onValueChange={v => set('instrument_id', v === '__none__' ? null : v)}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar instrumento" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Sin instrumento —</SelectItem>
+                  {filteredInstruments.map(inst => (
+                    <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
