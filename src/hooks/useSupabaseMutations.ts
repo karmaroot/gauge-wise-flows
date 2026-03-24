@@ -43,7 +43,7 @@ export function useDeleteInstitution() {
 export function useCreateIndicator() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { name: string; description?: string; unit: string; target_value: number; indicator_type: 'quantitative' | 'qualitative'; reporting_frequency: 'monthly' | 'quarterly' | 'annually'; is_active: boolean }) => {
+    mutationFn: async (values: { name: string; description?: string; unit: string; target_value: number; indicator_type: 'quantitative' | 'qualitative'; reporting_frequency: 'monthly' | 'quarterly' | 'annually'; is_active: boolean; institution_id?: string | null; instrument_id?: string | null }) => {
       const { error } = await supabase.from('indicators').insert(values);
       if (error) throw error;
     },
