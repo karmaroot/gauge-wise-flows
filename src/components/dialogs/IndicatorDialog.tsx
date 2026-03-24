@@ -104,7 +104,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Unidad</Label>
               <Input value={form.unit} onChange={e => set('unit', e.target.value)} required />
@@ -112,6 +112,10 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
             <div>
               <Label>Meta</Label>
               <Input type="number" value={form.target_value} onChange={e => set('target_value', Number(e.target.value))} required />
+            </div>
+            <div>
+              <Label>Ponderación (%)</Label>
+              <Input type="number" min={0} max={100} step={0.01} value={form.weight} onChange={e => set('weight', Number(e.target.value))} required placeholder="0 - 100" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
