@@ -1,0 +1,1 @@
+ALTER TABLE public.indicators ADD COLUMN weight numeric NOT NULL DEFAULT 0;

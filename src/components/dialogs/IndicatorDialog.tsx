@@ -14,6 +14,7 @@ interface IndicatorValues {
   description?: string;
   unit: string;
   target_value: number;
+  weight: number;
   indicator_type: 'quantitative' | 'qualitative';
   reporting_frequency: 'monthly' | 'quarterly' | 'annually';
   is_active: boolean;
@@ -33,16 +34,16 @@ interface Props {
 
 export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading, institutions = [], instruments = [] }: Props) {
   const [form, setForm] = useState<IndicatorValues>({
-    name: '', description: '', unit: 'percentage', target_value: 0,
+    name: '', description: '', unit: 'percentage', target_value: 0, weight: 0,
     indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true,
     institution_id: null, instrument_id: null,
   });
 
   useEffect(() => {
     if (indicator) {
-      setForm({ ...indicator, target_value: Number(indicator.target_value) });
+      setForm({ ...indicator, target_value: Number(indicator.target_value), weight: Number(indicator.weight ?? 0) });
     } else {
-      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
+      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
     }
   }, [indicator, open]);
 
@@ -103,7 +104,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Unidad</Label>
               <Input value={form.unit} onChange={e => set('unit', e.target.value)} required />
@@ -111,6 +112,10 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
             <div>
               <Label>Meta</Label>
               <Input type="number" value={form.target_value} onChange={e => set('target_value', Number(e.target.value))} required />
+            </div>
+            <div>
+              <Label>Ponderación (%)</Label>
+              <Input type="number" min={0} max={100} step={0.01} value={form.weight} onChange={e => set('weight', Number(e.target.value))} required placeholder="0 - 100" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

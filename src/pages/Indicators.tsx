@@ -66,6 +66,7 @@ export default function Indicators() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Instrumento</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Unidad</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Meta</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Ponderación</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Tipo</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Frecuencia</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-6 py-3">Estado</th>
@@ -80,6 +81,7 @@ export default function Indicators() {
                     <td className="px-6 py-4 text-sm text-muted-foreground">{ind.instrument_id ? instrumentMap[ind.instrument_id] ?? '—' : '—'}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{ind.unit}</td>
                     <td className="px-6 py-4 text-sm text-right font-medium text-foreground">{Number(ind.target_value)}</td>
+                    <td className="px-6 py-4 text-sm text-right text-muted-foreground">{Number((ind as any).weight ?? 0)}%</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{INDICATOR_TYPE_LABELS[ind.indicator_type as keyof typeof INDICATOR_TYPE_LABELS]}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{FREQUENCY_LABELS[ind.reporting_frequency as keyof typeof FREQUENCY_LABELS]}</td>
                     <td className="px-6 py-4 text-center">
