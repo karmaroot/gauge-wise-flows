@@ -34,7 +34,7 @@ interface Props {
 
 export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading, institutions = [], instruments = [] }: Props) {
   const [form, setForm] = useState<IndicatorValues>({
-    name: '', description: '', unit: 'percentage', target_value: 0,
+    name: '', description: '', unit: 'percentage', target_value: 0, weight: 0,
     indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true,
     institution_id: null, instrument_id: null,
   });
