@@ -14,6 +14,7 @@ interface IndicatorValues {
   description?: string;
   unit: string;
   target_value: number;
+  weight: number;
   indicator_type: 'quantitative' | 'qualitative';
   reporting_frequency: 'monthly' | 'quarterly' | 'annually';
   is_active: boolean;
