@@ -102,8 +102,11 @@ export type Database = {
           period_id: string
           reported_value: number | null
           reporting_month: string | null
+          returned_at: string | null
+          reviewed_at: string | null
           status: Database["public"]["Enums"]["report_status"]
           updated_at: string
+          verification_method: string | null
         }
         Insert: {
           comment?: string | null
@@ -117,8 +120,11 @@ export type Database = {
           period_id: string
           reported_value?: number | null
           reporting_month?: string | null
+          returned_at?: string | null
+          reviewed_at?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           updated_at?: string
+          verification_method?: string | null
         }
         Update: {
           comment?: string | null
@@ -132,8 +138,11 @@ export type Database = {
           period_id?: string
           reported_value?: number | null
           reporting_month?: string | null
+          returned_at?: string | null
+          reviewed_at?: string | null
           status?: Database["public"]["Enums"]["report_status"]
           updated_at?: string
+          verification_method?: string | null
         }
         Relationships: [
           {
