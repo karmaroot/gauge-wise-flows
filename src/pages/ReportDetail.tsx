@@ -1,17 +1,30 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Paperclip, Send } from 'lucide-react';
+import { ArrowLeft, Paperclip, Send, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { useReport, useObservations, useAttachments } from '@/hooks/useSupabaseQuery';
+import { useApproveReport, useRejectReport, useRespondObservation } from '@/hooks/useSupabaseMutations';
+import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportDetail() {
   const { id } = useParams();
+  const { user, userRole } = useAuth();
   const { data: report, isLoading } = useReport(id);
   const { data: observations } = useObservations(id);
   const { data: attachments } = useAttachments(id);
+
+  const approveReport = useApproveReport();
+  const rejectReport = useRejectReport();
+  const respondObservation = useRespondObservation();
+
+  const [rejectComment, setRejectComment] = useState('');
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [responseText, setResponseText] = useState('');
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
 
   if (isLoading) return (
     <AppLayout>
@@ -33,6 +46,29 @@ export default function ReportDetail() {
   const per = report.periods as any;
   const creator = report.profiles as any;
 
+  const isReviewer = userRole === 'reviewer' || userRole === 'admin';
+  const isInformant = report.created_by === user?.id;
+  const canReview = isReviewer && ['submitted', 'responded'].includes(report.status);
+  const canRespondObs = isInformant && report.status === 'observed';
+
+  function handleApprove() {
+    approveReport.mutate(report!.id);
+  }
+
+  function handleReject() {
+    if (!rejectComment.trim() || !user) return;
+    rejectReport.mutate({ reportId: report!.id, comment: rejectComment, userId: user.id });
+    setRejectComment('');
+    setShowRejectForm(false);
+  }
+
+  function handleRespondObs(observationId: string) {
+    if (!responseText.trim() || !user) return;
+    respondObservation.mutate({ observationId, comment: responseText, userId: user.id });
+    setResponseText('');
+    setRespondingTo(null);
+  }
+
   return (
     <AppLayout>
       <div className="mb-6">
@@ -43,6 +79,7 @@ export default function ReportDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {/* Report details */}
           <div className="bg-card rounded-lg shadow-card p-6">
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -59,15 +96,59 @@ export default function ReportDetail() {
               <div><p className="text-xs text-muted-foreground mb-1">Meta</p><p className="text-2xl font-semibold text-muted-foreground">{ind?.target_value}</p></div>
             </div>
 
+            {/* Numerator / Denominator */}
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div><p className="text-xs text-muted-foreground mb-1">Numerador</p><p className="text-sm font-medium text-foreground">{report.numerator ?? '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">Denominador</p><p className="text-sm font-medium text-foreground">{report.denominator ?? '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">Mes de Reporte</p><p className="text-sm font-medium text-foreground">{report.reporting_month ?? '—'}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">Unidad</p><p className="text-sm font-medium text-foreground">{ind?.unit ?? '—'}</p></div>
+            </div>
+
+            {(report as any).verification_method && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-1">Medio de Verificación</p>
+                <p className="text-sm text-foreground">{(report as any).verification_method}</p>
+              </div>
+            )}
+
             {report.comment && (
-              <div className="mt-6 pt-6 border-t">
-                <p className="text-xs text-muted-foreground mb-2">Comentario del Informante</p>
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2">Observaciones del Informante</p>
                 <p className="text-sm text-foreground">{report.comment}</p>
               </div>
             )}
+
+            {/* Dates */}
+            <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Fecha de Envío</p>
+                  <p className="text-xs font-mono text-foreground">{new Date(report.created_at).toLocaleString('es')}</p>
+                </div>
+              </div>
+              {(report as any).reviewed_at && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Fecha de Revisión</p>
+                    <p className="text-xs font-mono text-foreground">{new Date((report as any).reviewed_at).toLocaleString('es')}</p>
+                  </div>
+                </div>
+              )}
+              {(report as any).returned_at && (
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-3.5 w-3.5 text-amber-600" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Fecha de Devolución</p>
+                    <p className="text-xs font-mono text-foreground">{new Date((report as any).returned_at).toLocaleString('es')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Observations */}
+          {/* Observations thread */}
           <div className="bg-card rounded-lg shadow-card">
             <div className="p-6 border-b"><h3 className="text-sm font-medium text-foreground">Observaciones</h3></div>
             <div className="p-6 space-y-6">
@@ -81,7 +162,7 @@ export default function ReportDetail() {
                         <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                           <span className="text-xs font-medium text-amber-700">{obs.profiles?.name?.[0] ?? '?'}</span>
                         </div>
-                        {obs.observation_responses?.length > 0 && <div className="w-px flex-1 bg-border mt-2" />}
+                        {(obs.observation_responses?.length > 0 || (canRespondObs && obs.status === 'open')) && <div className="w-px flex-1 bg-border mt-2" />}
                       </div>
                       <div className="flex-1 pb-4">
                         <div className="flex items-center gap-2 mb-1">
@@ -105,33 +186,102 @@ export default function ReportDetail() {
                         </div>
                       </div>
                     ))}
+
+                    {/* Respond to open observation (informant) */}
+                    {canRespondObs && obs.status === 'open' && (
+                      <div className="ml-4 mt-2">
+                        {respondingTo === obs.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              placeholder="Escribe tu respuesta..."
+                              value={responseText}
+                              onChange={e => setResponseText(e.target.value)}
+                              rows={2}
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <Button variant="ghost" size="sm" onClick={() => { setRespondingTo(null); setResponseText(''); }}>Cancelar</Button>
+                              <Button size="sm" onClick={() => handleRespondObs(obs.id)} disabled={!responseText.trim() || respondObservation.isPending}>
+                                {respondObservation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Send className="h-3 w-3 mr-1" />}
+                                Responder
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => setRespondingTo(obs.id)}>
+                            Responder observación
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
-
-              <div className="pt-4 border-t">
-                <Textarea placeholder="Escribir una respuesta..." className="mb-3" rows={3} />
-                <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="sm"><Paperclip className="h-4 w-4 mr-1" />Adjuntar</Button>
-                  <Button size="sm"><Send className="h-4 w-4 mr-1" />Responder</Button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
+        {/* Sidebar */}
         <div className="space-y-6">
-          {(report.status === 'submitted' || report.status === 'responded') && (
+          {/* Reviewer actions */}
+          {canReview && (
             <div className="bg-card rounded-lg shadow-card p-6 space-y-3">
               <h3 className="text-sm font-medium text-foreground mb-4">Acciones del Revisor</h3>
-              <Button className="w-full bg-amber-50 text-amber-700 hover:bg-amber-100 border-0" variant="outline">Crear Observación</Button>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 text-destructive hover:bg-destructive/10 border-destructive/30">Rechazar</Button>
-                <Button className="flex-1">Aprobar</Button>
-              </div>
+
+              {!showRejectForm ? (
+                <>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 text-amber-700 hover:bg-amber-50 border-amber-200"
+                      onClick={() => setShowRejectForm(true)}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />Observar
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={handleApprove}
+                      disabled={approveReport.isPending}
+                    >
+                      {approveReport.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+                      Aprobar
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <Textarea
+                    placeholder="Describe las observaciones para el informante..."
+                    value={rejectComment}
+                    onChange={e => setRejectComment(e.target.value)}
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => { setShowRejectForm(false); setRejectComment(''); }}>Cancelar</Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleReject}
+                      disabled={!rejectComment.trim() || rejectReport.isPending}
+                    >
+                      {rejectReport.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                      Devolver con Observaciones
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* Status info for informant when observed */}
+          {isInformant && report.status === 'observed' && (
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+              <p className="text-sm font-medium text-amber-800 mb-1">⚠️ Reporte devuelto</p>
+              <p className="text-xs text-amber-700">Revisa las observaciones del revisor y corrige tu reporte desde la Bandeja de Entrada.</p>
+            </div>
+          )}
+
+          {/* Attachments */}
           <div className="bg-card rounded-lg shadow-card p-6">
             <h3 className="text-sm font-medium text-foreground mb-4">Evidencia Adjunta</h3>
             {(attachments ?? []).length === 0 ? (
@@ -139,7 +289,7 @@ export default function ReportDetail() {
             ) : (
               <div className="space-y-2">
                 {attachments!.map((att: any) => (
-                  <div key={att.id} className="flex items-center gap-3 p-3 rounded-inner bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+                  <div key={att.id} className="flex items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
                     <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{att.file_name}</p>
@@ -151,11 +301,15 @@ export default function ReportDetail() {
             )}
           </div>
 
+          {/* Info */}
           <div className="bg-card rounded-lg shadow-card p-6">
             <h3 className="text-sm font-medium text-foreground mb-4">Información</h3>
             <div className="space-y-3 text-sm">
               <div><span className="text-muted-foreground">Creado por:</span> <span className="text-foreground">{creator?.name ?? '—'}</span></div>
               <div><span className="text-muted-foreground">Fecha:</span> <span className="text-foreground font-mono text-xs">{new Date(report.created_at).toLocaleDateString('es')}</span></div>
+              {report.updated_at !== report.created_at && (
+                <div><span className="text-muted-foreground">Última actualización:</span> <span className="text-foreground font-mono text-xs">{new Date(report.updated_at).toLocaleString('es')}</span></div>
+              )}
             </div>
           </div>
         </div>

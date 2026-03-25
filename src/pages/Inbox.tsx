@@ -4,11 +4,11 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Inbox as InboxIcon, FileBarChart, Eye } from 'lucide-react';
+import { Inbox as InboxIcon, FileBarChart, Eye, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAssignments } from '@/hooks/useInstruments';
 import { useReports, usePeriods } from '@/hooks/useSupabaseQuery';
-import { useSubmitReport } from '@/hooks/useSupabaseMutations';
+import { useSubmitReport, useResubmitReport } from '@/hooks/useSupabaseMutations';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FREQUENCY_LABELS } from '@/lib/constants';
 import { Link } from 'react-router-dom';
@@ -22,11 +22,12 @@ export default function InboxPage() {
   const { data: reports } = useReports();
   const { data: periods } = usePeriods();
   const submitReport = useSubmitReport();
+  const resubmitReport = useResubmitReport();
 
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [resubmitTarget, setResubmitTarget] = useState<any>(null);
 
-  // Find active period (status=open and current date within range)
   const now = new Date();
   const activePeriod = (periods ?? []).find(p =>
     p.status === 'open' && new Date(p.start_date) <= now && new Date(p.end_date) >= now
@@ -35,15 +36,16 @@ export default function InboxPage() {
   const myAsInformant = (assignments ?? []).filter((a: any) => a.informant_id === user?.id);
   const myAsReviewer = (assignments ?? []).filter((a: any) => a.reviewer_id === user?.id);
 
-  // Reports where I'm informant
   const myReportIds = new Set(myAsInformant.map((a: any) => a.indicator_id));
   const myReports = (reports ?? []).filter(r => r.created_by === user?.id || myReportIds.has(r.indicator_id));
 
-  // Reports I need to review
+  // Reports returned to informant (observed)
+  const returnedReports = myReports.filter(r => r.status === 'observed');
+
+  // Reports reviewer needs to review
   const reviewIndicatorIds = new Set(myAsReviewer.map((a: any) => a.indicator_id));
   const reviewReports = (reports ?? []).filter(r => reviewIndicatorIds.has(r.indicator_id) && ['submitted', 'responded'].includes(r.status));
 
-  // Check if an assignment already has a report for the active period
   function hasReportForPeriod(assignment: any) {
     if (!activePeriod) return false;
     return (reports ?? []).some(r =>
@@ -54,15 +56,29 @@ export default function InboxPage() {
 
   function handleOpenReport(assignment: any) {
     setSelectedAssignment(assignment);
+    setResubmitTarget(null);
+    setReportDialogOpen(true);
+  }
+
+  function handleOpenResubmit(report: any, assignment: any) {
+    setSelectedAssignment(assignment);
+    setResubmitTarget(report);
     setReportDialogOpen(true);
   }
 
   function handleSubmitReport(values: any) {
     if (!user) return;
-    submitReport.mutate(
-      { ...values, created_by: user.id },
-      { onSuccess: () => setReportDialogOpen(false) },
-    );
+    if (resubmitTarget) {
+      resubmitReport.mutate(
+        { reportId: resubmitTarget.id, ...values },
+        { onSuccess: () => setReportDialogOpen(false) },
+      );
+    } else {
+      submitReport.mutate(
+        { ...values, created_by: user.id },
+        { onSuccess: () => setReportDialogOpen(false) },
+      );
+    }
   }
 
   return (
@@ -79,10 +95,22 @@ export default function InboxPage() {
       <Tabs defaultValue="assignments" className="space-y-4">
         <TabsList>
           <TabsTrigger value="assignments">Mis Asignaciones</TabsTrigger>
+          <TabsTrigger value="returned" className="relative">
+            Devueltos
+            {returnedReports.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500 text-[10px] font-bold text-white">{returnedReports.length}</span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="reports">Mis Reportes</TabsTrigger>
-          <TabsTrigger value="review">Por Revisar</TabsTrigger>
+          <TabsTrigger value="review" className="relative">
+            Por Revisar
+            {reviewReports.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{reviewReports.length}</span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
+        {/* Assignments tab */}
         <TabsContent value="assignments">
           {isLoading ? (
             <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}</div>
@@ -133,6 +161,44 @@ export default function InboxPage() {
           )}
         </TabsContent>
 
+        {/* Returned reports tab */}
+        <TabsContent value="returned">
+          {!returnedReports.length ? (
+            <EmptyState icon={AlertTriangle} title="Sin reportes devueltos" description="No tienes reportes con observaciones pendientes." />
+          ) : (
+            <div className="space-y-3">
+              {returnedReports.map(r => {
+                const assignment = myAsInformant.find((a: any) => a.indicator_id === r.indicator_id);
+                return (
+                  <div key={r.id} className="bg-card rounded-lg shadow-card p-4 border-l-4 border-amber-400">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">{(r.indicators as any)?.name}</h4>
+                        <p className="text-xs text-muted-foreground">{(r.institutions as any)?.name} — {(r.periods as any)?.name}</p>
+                        {(r as any).returned_at && (
+                          <p className="text-[10px] text-amber-600 mt-1">Devuelto: {new Date((r as any).returned_at).toLocaleString('es')}</p>
+                        )}
+                      </div>
+                      <StatusBadge status={r.status as any} />
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/reports/${r.id}`}><Eye className="h-3.5 w-3.5 mr-1" />Ver Observaciones</Link>
+                      </Button>
+                      {assignment && (
+                        <Button size="sm" onClick={() => handleOpenResubmit(r, assignment)}>
+                          Corregir y Reenviar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* My reports tab */}
         <TabsContent value="reports">
           {!myReports.length ? (
             <EmptyState icon={FileBarChart} title="Sin reportes" description="No tienes reportes asignados." />
@@ -156,6 +222,7 @@ export default function InboxPage() {
           )}
         </TabsContent>
 
+        {/* Review tab */}
         <TabsContent value="review">
           {!reviewReports.length ? (
             <EmptyState icon={Eye} title="Nada por revisar" description="No tienes reportes pendientes de revisión." />
@@ -166,11 +233,12 @@ export default function InboxPage() {
                   <div>
                     <p className="text-sm font-medium text-foreground">{(r.indicators as any)?.name}</p>
                     <p className="text-xs text-muted-foreground">{(r.institutions as any)?.name} — {(r.periods as any)?.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{new Date(r.created_at).toLocaleString('es')}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={r.status as any} />
-                    <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-                      <Link to={`/reports/${r.id}`}><Eye className="h-3.5 w-3.5" /></Link>
+                    <Button asChild size="sm">
+                      <Link to={`/reports/${r.id}`}><Eye className="h-3.5 w-3.5 mr-1" />Revisar</Link>
                     </Button>
                   </div>
                 </div>
@@ -180,14 +248,15 @@ export default function InboxPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Report submission dialog */}
+      {/* Report submission / resubmission dialog */}
       <ReportIndicatorDialog
         open={reportDialogOpen}
         onOpenChange={setReportDialogOpen}
         assignment={selectedAssignment}
         activePeriod={activePeriod}
         onSubmit={handleSubmitReport}
-        loading={submitReport.isPending}
+        loading={submitReport.isPending || resubmitReport.isPending}
+        existingReport={resubmitTarget}
       />
     </AppLayout>
   );

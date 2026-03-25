@@ -151,6 +151,7 @@ export function useSubmitReport() {
       reported_value: number;
       reporting_month: string;
       comment: string;
+      verification_method?: string;
       created_by: string;
     }) => {
       const { error } = await supabase.from('indicator_reports').insert({
@@ -162,6 +163,7 @@ export function useSubmitReport() {
         reported_value: values.reported_value,
         reporting_month: values.reporting_month,
         comment: values.comment || null,
+        verification_method: values.verification_method || null,
         created_by: values.created_by,
         status: 'submitted',
       });
@@ -171,6 +173,113 @@ export function useSubmitReport() {
       qc.invalidateQueries({ queryKey: ['reports'] });
       qc.invalidateQueries({ queryKey: ['my-assignments'] });
       toast.success('Reporte enviado exitosamente');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// --- Resubmit Report (informant corrects and resubmits after observation) ---
+export function useResubmitReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ reportId, ...values }: {
+      reportId: string;
+      numerator: number;
+      denominator: number;
+      reported_value: number;
+      comment: string;
+      verification_method?: string;
+    }) => {
+      const { error } = await supabase.from('indicator_reports').update({
+        numerator: values.numerator,
+        denominator: values.denominator,
+        reported_value: values.reported_value,
+        comment: values.comment || null,
+        verification_method: values.verification_method || null,
+        status: 'responded',
+        updated_at: new Date().toISOString(),
+      }).eq('id', reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['report'] });
+      qc.invalidateQueries({ queryKey: ['my-assignments'] });
+      toast.success('Reporte corregido y reenviado');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// --- Reviewer: Approve report ---
+export function useApproveReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (reportId: string) => {
+      const { error } = await supabase.from('indicator_reports').update({
+        status: 'approved',
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['report'] });
+      toast.success('Reporte aprobado');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// --- Reviewer: Reject with observation ---
+export function useRejectReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ reportId, comment, userId }: { reportId: string; comment: string; userId: string }) => {
+      // Create observation
+      const { error: obsErr } = await supabase.from('observations').insert({
+        report_id: reportId,
+        user_id: userId,
+        comment,
+        status: 'open',
+      });
+      if (obsErr) throw obsErr;
+      // Update report status to observed + returned_at
+      const { error: repErr } = await supabase.from('indicator_reports').update({
+        status: 'observed',
+        returned_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', reportId);
+      if (repErr) throw repErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['reports'] });
+      qc.invalidateQueries({ queryKey: ['report'] });
+      qc.invalidateQueries({ queryKey: ['observations'] });
+      toast.success('Reporte devuelto con observaciones');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// --- Informant: Respond to observation ---
+export function useRespondObservation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ observationId, comment, userId }: { observationId: string; comment: string; userId: string }) => {
+      const { error: respErr } = await supabase.from('observation_responses').insert({
+        observation_id: observationId,
+        user_id: userId,
+        comment,
+      });
+      if (respErr) throw respErr;
+      const { error: obsErr } = await supabase.from('observations').update({ status: 'answered' }).eq('id', observationId);
+      if (obsErr) throw obsErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['observations'] });
+      toast.success('Respuesta enviada');
     },
     onError: (e: any) => toast.error(e.message),
   });
