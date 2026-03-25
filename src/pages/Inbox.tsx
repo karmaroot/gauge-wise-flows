@@ -146,13 +146,24 @@ export default function InboxPage() {
                       <span className="text-xs text-muted-foreground">
                         Meta: {(a.indicators as any)?.target_value} {(a.indicators as any)?.unit}
                       </span>
-                      {isInformant && (
-                        alreadyReported
-                          ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-600">Ya reportado</Badge>
-                          : activePeriod
-                            ? <Badge className="text-[10px] bg-primary/10 text-primary">Pendiente de reporte</Badge>
-                            : <Badge variant="outline" className="text-[10px]">Sin periodo activo</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isInformant && (
+                          alreadyReported
+                            ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-600">Ya reportado</Badge>
+                            : activePeriod
+                              ? <Button size="sm" onClick={(e) => { e.stopPropagation(); handleOpenReport(a); }}>
+                                  <FileBarChart className="h-3.5 w-3.5 mr-1" />Reportar
+                                </Button>
+                              : <Badge variant="outline" className="text-[10px]">Sin periodo activo</Badge>
+                        )}
+                        {alreadyReported && (
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={`/reports/${(reports ?? []).find(r => r.indicator_id === a.indicator_id && r.period_id === activePeriod?.id)?.id}`}>
+                              <Eye className="h-3.5 w-3.5 mr-1" />Ver Reporte
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
