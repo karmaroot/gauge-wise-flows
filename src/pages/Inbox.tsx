@@ -126,8 +126,7 @@ export default function InboxPage() {
                 return (
                   <div
                     key={a.id}
-                    className={`bg-card rounded-lg shadow-card p-4 transition-colors ${canReport ? 'cursor-pointer hover:bg-muted/50 ring-1 ring-transparent hover:ring-primary/20' : ''}`}
-                    onClick={canReport ? () => handleOpenReport(a) : undefined}
+                    className="bg-card rounded-lg shadow-card p-4"
                   >
                     <div className="flex items-start justify-between">
                       <div>
