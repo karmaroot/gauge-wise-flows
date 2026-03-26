@@ -34,8 +34,15 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const { data: inboxCounts } = useInboxCounts(user?.id);
   const isActive = (path: string) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+
+  const getBadge = (url: string) => {
+    if (url === '/inbox' && inboxCounts?.total) return inboxCounts.total;
+    if (url === '/reports' && inboxCounts?.pendingReview) return inboxCounts.pendingReview;
+    return 0;
+  };
 
   return (
     <Sidebar collapsible="icon">
