@@ -31,6 +31,7 @@ export const INSTITUTION_TYPE_LABELS = {
 export const INDICATOR_TYPE_LABELS = {
   quantitative: 'Cuantitativo',
   qualitative: 'Cualitativo',
+  quantity: 'Cantidad',
 } as const;
 
 export const FREQUENCY_LABELS = {

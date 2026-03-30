@@ -514,7 +514,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "reviewer" | "informant"
-      indicator_type: "quantitative" | "qualitative"
+      indicator_type: "quantitative" | "qualitative" | "quantity"
       institution_type: "public" | "private" | "autonomous"
       observation_status: "open" | "answered" | "closed"
       period_status: "open" | "closed"
@@ -655,7 +655,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "reviewer", "informant"],
-      indicator_type: ["quantitative", "qualitative"],
+      indicator_type: ["quantitative", "qualitative", "quantity"],
       institution_type: ["public", "private", "autonomous"],
       observation_status: ["open", "answered", "closed"],
       period_status: ["open", "closed"],

@@ -24,7 +24,7 @@ export function useInstrumentIndicators(instrumentId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instrument_indicators')
-        .select('*, instruments(name, institution_id), indicators(name, unit, target_value, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name, email), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name, email)')
+        .select('*, instruments(name, institution_id), indicators(name, description, unit, target_value, indicator_type, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name, email), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name, email)')
         .eq('instrument_id', instrumentId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -40,7 +40,7 @@ export function useMyAssignments(userId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instrument_indicators')
-        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, unit, target_value, reporting_frequency)')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency)')
         .or(`informant_id.eq.${userId},reviewer_id.eq.${userId}`)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -56,7 +56,7 @@ export function useAllInstrumentIndicators() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instrument_indicators')
-        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, unit, target_value, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name)')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name)')
         .eq('is_active', true)
         .eq('auto_start', true)
         .order('created_at');
