@@ -62,7 +62,7 @@ export default function Indicators() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Nombre</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Institución</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Centros de Responsabilidad</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Instrumento</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Unidad</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Meta</th>

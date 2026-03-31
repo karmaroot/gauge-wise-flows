@@ -31,8 +31,8 @@ export default function Institutions() {
 
   return (
     <AppLayout>
-      <PageHeader title="Instituciones" description="Gestión de instituciones del sistema">
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Nueva Institución</Button>
+      <PageHeader title="Centros de Responsabilidad" description="Gestión de agrupaciones del sistema">
+        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Nuevo Centro de Responsabilidad</Button>
       </PageHeader>
 
       {isLoading ? (
@@ -72,7 +72,7 @@ export default function Institutions() {
       )}
 
       <InstitutionDialog open={dialogOpen} onOpenChange={setDialogOpen} institution={editing} onSave={handleSave} loading={createMut.isPending || updateMut.isPending} />
-      <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar institución?" description="Se eliminará permanentemente esta institución." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
+      <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar Centro de Responsabilidad?" description="Se eliminará permanentemente este centro." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
     </AppLayout>
   );
 }

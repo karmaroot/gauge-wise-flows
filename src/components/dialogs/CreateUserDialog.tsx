@@ -60,7 +60,7 @@ export function CreateUserDialog({ open, onOpenChange, onSave, loading }: Props)
             </Select>
           </div>
           <div>
-            <Label>Institución</Label>
+            <Label>Centro de Responsabilidad</Label>
             <Select value={institutionId ?? '_none'} onValueChange={v => setInstitutionId(v === '_none' ? null : v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

@@ -37,7 +37,7 @@ export function InstitutionDialog({ open, onOpenChange, institution, onSave, loa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{institution ? 'Editar Institución' : 'Nueva Institución'}</DialogTitle>
+          <DialogTitle>{institution ? 'Editar Centro de Responsabilidad' : 'Nuevo Centro de Responsabilidad'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

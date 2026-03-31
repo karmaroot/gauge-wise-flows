@@ -1,0 +1,4 @@
+nombre,formula_calculo,centro_responsabilidad,instrumento,unidad,meta,ponderacion,tipo,frecuencia,medio_verificacion,notas_tecnicas,activo
+"Porcentaje de ejecución presupuestaria","(Gasto Real / Presupuesto Vigente) * 100","Área de Gestión Estratégica","PMG","percentage",100,20,"quantitative","quarterly","Reporte de ejecución de la SUBDERE","Este indicador es crítico para la gestión anual",true
+"Número de proyectos aprobados","Sumatoria simple de proyectos con resolución de aprobación","Operaciones","CDC","proyectos",50,15,"quantitative","monthly","Sistema Interno de Gestión de Proyectos","No incluir proyectos en estado de borrador",true
+"Calidad del informe de gestión","Evaluación promediada de los 5 criterios de calidad","Jurídica","GI","grado",4.5,10,"qualitative","annually","Acta del comité de expertos","Evaluado por el comité externo",true

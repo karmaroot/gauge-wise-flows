@@ -61,7 +61,7 @@ export default function InstitutionDetail() {
   if (!institution) return (
     <AppLayout>
       <div className="text-center py-16">
-        <p className="text-muted-foreground mb-4">Institución no encontrada</p>
+        <p className="text-muted-foreground mb-4">Centro de Responsabilidad no encontrado</p>
         <Button asChild variant="outline"><Link to="/institutions"><ArrowLeft className="h-4 w-4 mr-2" />Volver</Link></Button>
       </div>
     </AppLayout>
@@ -70,7 +70,7 @@ export default function InstitutionDetail() {
   return (
     <AppLayout>
       <div className="mb-4">
-        <Button asChild variant="ghost" size="sm"><Link to="/institutions"><ArrowLeft className="h-4 w-4 mr-2" />Instituciones</Link></Button>
+        <Button asChild variant="ghost" size="sm"><Link to="/institutions"><ArrowLeft className="h-4 w-4 mr-2" />Centros de Responsabilidad</Link></Button>
       </div>
       <PageHeader title={institution.name} description="Gestión de instrumentos y asignaciones de indicadores">
         <Button onClick={() => { setEditingInstr(null); setInstrDialog(true); }}><Plus className="h-4 w-4 mr-2" />Nuevo Instrumento</Button>

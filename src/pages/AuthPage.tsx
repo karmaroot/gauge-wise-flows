@@ -43,8 +43,8 @@ export default function AuthPage() {
           <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center mx-auto mb-4">
             <span className="text-lg font-bold text-primary-foreground">SG</span>
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">SGVI</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sistema de Gestión y Validación de Indicadores</p>
+          <h1 className="text-2xl font-semibold text-foreground">Área de Gestión Estratégica Comisión Nacional de Riego</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sistema de Gestión de Indicadores</p>
         </div>
 
         <div className="bg-card rounded-lg shadow-card p-6">

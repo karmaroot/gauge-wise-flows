@@ -23,7 +23,7 @@ const mainNav = [
 ];
 
 const adminNav = [
-  { title: 'Instituciones', url: '/institutions', icon: Building2 },
+  { title: 'Centros de Responsabilidad', url: '/institutions', icon: Building2 },
   { title: 'Periodos', url: '/periods', icon: ClipboardList },
   { title: 'Inicio Automático', url: '/auto-start', icon: Zap },
   { title: 'Usuarios', url: '/users', icon: Users },
@@ -53,8 +53,8 @@ export function AppSidebar() {
               <span className="text-sm font-bold text-primary-foreground">SG</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-sidebar-foreground">SGVI</p>
-              <p className="text-[10px] text-muted-foreground leading-none">Gestión de Indicadores</p>
+              <p className="text-sm font-semibold text-sidebar-foreground">Área de Gestión Estratégica Comisión Nacional de Riego</p>
+              <p className="text-[10px] text-muted-foreground leading-none">Sistema de Gestión de Indicadores</p>
             </div>
           </div>
         ) : (
@@ -142,7 +142,7 @@ export function AppSidebar() {
           {!collapsed && <span className="ml-2">Cerrar Sesión</span>}
         </Button>
         {!collapsed && (
-          <p className="text-[10px] text-muted-foreground text-center">SGVI v1.0</p>
+          <p className="text-[10px] text-muted-foreground text-center">Área de Gestión Estratégica Comisión Nacional de Riego v1.0</p>
         )}
       </SidebarFooter>
     </Sidebar>

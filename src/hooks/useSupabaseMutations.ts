@@ -10,7 +10,7 @@ export function useCreateInstitution() {
       const { error } = await supabase.from('institutions').insert(values);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Institución creada'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Centro de Responsabilidad creado'); },
     onError: (e: any) => toast.error(e.message),
   });
 }
@@ -22,7 +22,7 @@ export function useUpdateInstitution() {
       const { error } = await supabase.from('institutions').update(values).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Institución actualizada'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Centro de Responsabilidad actualizado'); },
     onError: (e: any) => toast.error(e.message),
   });
 }
@@ -34,7 +34,7 @@ export function useDeleteInstitution() {
       const { error } = await supabase.from('institutions').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Institución eliminada'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['institutions'] }); toast.success('Centro de Responsabilidad eliminado'); },
     onError: (e: any) => toast.error(e.message),
   });
 }

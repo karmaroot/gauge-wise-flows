@@ -18,6 +18,8 @@ interface IndicatorValues {
   indicator_type: 'quantitative' | 'qualitative' | 'quantity';
   reporting_frequency: 'monthly' | 'quarterly' | 'annually';
   is_active: boolean;
+  notes?: string;
+  verification_means?: string;
   institution_id?: string | null;
   instrument_id?: string | null;
 }
@@ -36,14 +38,14 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
   const [form, setForm] = useState<IndicatorValues>({
     name: '', description: '', unit: 'percentage', target_value: 0, weight: 0,
     indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true,
-    institution_id: null, instrument_id: null,
+    notes: '', verification_means: '', institution_id: null, instrument_id: null,
   });
 
   useEffect(() => {
     if (indicator) {
       setForm({ ...indicator, target_value: Number(indicator.target_value), weight: Number(indicator.weight ?? 0) });
     } else {
-      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, institution_id: null, instrument_id: null });
+      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, notes: '', verification_means: '', institution_id: null, instrument_id: null });
     }
   }, [indicator, open]);
 
@@ -65,7 +67,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{indicator ? 'Editar Indicador' : 'Nuevo Indicador'}</DialogTitle>
         </DialogHeader>
@@ -75,16 +77,16 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
             <Input value={form.name} onChange={e => set('name', e.target.value)} required />
           </div>
           <div>
-            <Label>Descripción</Label>
-            <Textarea value={form.description ?? ''} onChange={e => set('description', e.target.value)} rows={2} />
+            <Label>Fórmula de Cálculo</Label>
+            <Textarea value={form.description ?? ''} onChange={e => set('description', e.target.value)} rows={2} placeholder="Describa la fórmula aplicada para este indicador..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Institución</Label>
+              <Label>Centro de Responsabilidad</Label>
               <Select value={form.institution_id ?? '__none__'} onValueChange={handleInstitutionChange}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar institución" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Seleccionar centro" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">— Sin institución —</SelectItem>
+                  <SelectItem value="__none__">— Sin Centro de Responsabilidad —</SelectItem>
                   {institutions.map(inst => (
                     <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
                   ))}
@@ -145,6 +147,26 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
           <div className="flex items-center gap-2">
             <Switch checked={form.is_active} onCheckedChange={v => set('is_active', v)} />
             <Label>Activo</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Medio de Verificación</Label>
+              <Textarea 
+                value={form.verification_means ?? ''} 
+                onChange={e => set('verification_means', e.target.value)} 
+                placeholder="Documentos, reportes o fuentes de verificación..." 
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label>Notas Técnicas</Label>
+              <Textarea 
+                value={form.notes ?? ''} 
+                onChange={e => set('notes', e.target.value)} 
+                placeholder="Información adicional o notas técnicas sobre el indicador..." 
+                rows={4}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>

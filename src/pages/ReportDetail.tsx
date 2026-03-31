@@ -90,7 +90,7 @@ export default function ReportDetail() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div><p className="text-xs text-muted-foreground mb-1">Institución</p><p className="text-sm font-medium text-foreground">{inst?.name}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">Centro de Responsabilidad</p><p className="text-sm font-medium text-foreground">{inst?.name}</p></div>
               <div><p className="text-xs text-muted-foreground mb-1">Periodo</p><p className="text-sm font-medium text-foreground">{per?.name}</p></div>
               <div><p className="text-xs text-muted-foreground mb-1">Valor Reportado</p><p className="text-2xl font-semibold text-foreground">{report.reported_value ?? '—'}</p></div>
               <div><p className="text-xs text-muted-foreground mb-1">Meta</p><p className="text-2xl font-semibold text-muted-foreground">{ind?.target_value}</p></div>

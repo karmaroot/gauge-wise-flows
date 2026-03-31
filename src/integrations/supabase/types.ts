@@ -178,9 +178,11 @@ export type Database = {
           instrument_id: string | null
           is_active: boolean
           name: string
+          notes: string | null
           reporting_frequency: Database["public"]["Enums"]["reporting_frequency"]
           target_value: number
           unit: string
+          verification_means: string | null
           weight: number
         }
         Insert: {
@@ -192,9 +194,11 @@ export type Database = {
           instrument_id?: string | null
           is_active?: boolean
           name: string
+          notes?: string | null
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
           target_value?: number
           unit?: string
+          verification_means?: string | null
           weight?: number
         }
         Update: {
@@ -206,9 +210,11 @@ export type Database = {
           instrument_id?: string | null
           is_active?: boolean
           name?: string
+          notes?: string | null
           reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
           target_value?: number
           unit?: string
+          verification_means?: string | null
           weight?: number
         }
         Relationships: [

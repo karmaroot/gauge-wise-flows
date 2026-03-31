@@ -43,7 +43,7 @@ export default function Reports() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Indicador</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Institución</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Centro de Responsabilidad</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Periodo</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Reportado</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Meta</th>
