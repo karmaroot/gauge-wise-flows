@@ -38,6 +38,10 @@ Para más detalles sobre las reglas de seguridad y políticas aplicadas al servi
 3. Configurar variables de entorno en `.env` (Supabase URL y Anon Key).
 4. Ejecutar `npm run dev` para iniciar el servidor de desarrollo local.
 
+## Propiedad Intelectual y Autorización de Uso
+
+Esta aplicación es una obra original y su uso está sujeto a la autorización expresa de su creador, **Marcelo Silva Magna**. Es importante señalar que el uso de esta plataforma por parte de la **COMISIÓN NACIONAL DE RIEGO (CNR)** no implica, bajo ningún término, la transferencia de la propiedad intelectual ni que la aplicación sea propiedad de dicha institución.
+
 ## Creador
 
 **Marcelo Silva Magna**  
