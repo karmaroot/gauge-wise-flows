@@ -1,10 +1,8 @@
-# SGVI – Sistema de Gestión y Validación de Indicadores
-
-**ÁREA DE GESTIÓN ESTRATÉGICA (AGE) - COMISIÓN NACIONAL DE RIEGO**
+# SGI – Sistema de Gestión de Indicadores
 
 ## Resumen del Proyecto
 
-Este sistema es una plataforma integral para la gestión, reporte y validación de indicadores de gestión interna. Facilita la trazabilidad total del ciclo de reportabilidad, desde la carga inicial de datos por los informantes hasta la aprobación técnica por parte del equipo de revisión (AGE).
+Este sistema es una plataforma integral para la gestión, reporte y validación de indicadores de gestión. Facilita la trazabilidad total del ciclo de reportabilidad, desde la carga inicial de datos por los informantes hasta la aprobación técnica por parte del equipo revisor.
 
 ## Roles del Sistema
 
@@ -15,7 +13,7 @@ Este sistema es una plataforma integral para la gestión, reporte y validación 
 ## Características Principales
 
 - **Gestión de Evidencias**: Sistema de carga de archivos integrado con Supabase Storage (bucket `verification-documents`).
-- **Trazabilidad de Observaciones**: Hilo de comunicación entre informante e revisor para la corrección de datos.
+- **Trazabilidad de Observaciones**: Hilo de comunicación entre informante y revisor para la corrección de datos.
 - **Cálculos Automáticos**: Validación en tiempo real de metas programadas vs. avances reportados.
 - **Seguridad Robusta**: Control de acceso basado en roles y políticas de seguridad a nivel de fila (RLS) en tiempo real.
 - **Diseño Moderno**: Interfaz construida con React y Tailwind CSS, enfocada en la usabilidad y eficiencia.
@@ -40,7 +38,7 @@ Para más detalles sobre las reglas de seguridad y políticas aplicadas al servi
 
 ## Propiedad Intelectual y Autorización de Uso
 
-Esta aplicación es una obra original y su uso está sujeto a la autorización expresa de su creador, **Marcelo Silva Magna**. Es importante señalar que el uso de esta plataforma por parte de la **COMISIÓN NACIONAL DE RIEGO (CNR)** no implica, bajo ningún término, la transferencia de la propiedad intelectual ni que la aplicación sea propiedad de dicha institución.
+Esta aplicación es una obra original y su propiedad intelectual pertenece exclusivamente a su creador, **Marcelo Silva Magna**. Su uso por parte de cualquier institución u organización es de carácter autorizado y no implica transferencia de propiedad ni derechos sobre el código fuente o la lógica del sistema.
 
 ## Creador
 

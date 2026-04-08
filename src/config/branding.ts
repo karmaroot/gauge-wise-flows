@@ -5,11 +5,12 @@
 export const BRANDING = {
   institution: {
     name: "Área de Gestión Estratégica",
-    parent: "Comisión Nacional de Riego",
+    parent: "",
     shortName: "AGE",
   },
   system: {
     name: "Sistema de Gestión de Indicadores",
+    acronym: "SGI",
     version: "v1.0",
   },
   assets: {
@@ -17,7 +18,7 @@ export const BRANDING = {
     favicon: "/favicon.png",
   },
   meta: {
-    title: "Área de Gestión Estratégica - Comisión Nacional de Riego",
-    description: "Sistema de gestión de indicadores institucionales. Reporte, revisión y aprobación de indicadores de gestión interna",
+    title: "SGI - Sistema de Gestión de Indicadores",
+    description: "Plataforma para el reporte, revisión y aprobación de indicadores de gestión.",
   },
 };
