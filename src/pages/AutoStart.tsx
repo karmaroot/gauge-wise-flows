@@ -105,9 +105,14 @@ export default function AutoStart() {
                         <h4 className="text-sm font-medium text-foreground">{(a.indicators as any)?.name}</h4>
                         <p className="text-xs text-muted-foreground">{(a.instruments as any)?.name} — {(a.instruments as any)?.institutions?.name}</p>
                       </div>
-                      <Badge className="text-[10px] bg-emerald-100 text-emerald-700">
-                        {FREQUENCY_LABELS[a.periodicity as keyof typeof FREQUENCY_LABELS] ?? a.periodicity}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="text-[10px] bg-emerald-100 text-emerald-700">
+                          {FREQUENCY_LABELS[a.periodicity as keyof typeof FREQUENCY_LABELS] ?? a.periodicity}
+                        </Badge>
+                        <Button size="sm" variant="outline" onClick={() => handleStartOne(a)} disabled={autoStart.isPending}>
+                          <Play className="h-3 w-3 mr-1" />Iniciar
+                        </Button>
+                      </div>
                     </div>
                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                       <Clock className="h-3 w-3" />

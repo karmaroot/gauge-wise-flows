@@ -22,6 +22,24 @@ interface IndicatorValues {
   verification_means?: string;
   institution_id?: string | null;
   instrument_id?: string | null;
+  jan_prog?: number;
+  feb_prog?: number;
+  mar_prog?: number;
+  apr_prog?: number;
+  may_prog?: number;
+  jun_prog?: number;
+  jul_prog?: number;
+  aug_prog?: number;
+  sep_prog?: number;
+  oct_prog?: number;
+  nov_prog?: number;
+  dec_prog?: number;
+  q1_prog: number;
+  q2_prog: number;
+  q3_prog: number;
+  q4_prog: number;
+  informant_id?: string | null;
+  reviewer_id?: string | null;
 }
 
 interface Props {
@@ -32,20 +50,37 @@ interface Props {
   loading?: boolean;
   institutions?: Array<{ id: string; name: string }>;
   instruments?: Array<{ id: string; name: string; institution_id: string }>;
+  profiles?: Array<{ id: string; name: string }>;
 }
 
-export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading, institutions = [], instruments = [] }: Props) {
+export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading, institutions = [], instruments = [], profiles = [] }: Props) {
   const [form, setForm] = useState<IndicatorValues>({
     name: '', description: '', unit: 'percentage', target_value: 0, weight: 0,
     indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true,
     notes: '', verification_means: '', institution_id: null, instrument_id: null,
+    q1_prog: 0, q2_prog: 0, q3_prog: 0, q4_prog: 0,
+    informant_id: null, reviewer_id: null
   });
 
   useEffect(() => {
     if (indicator) {
-      setForm({ ...indicator, target_value: Number(indicator.target_value), weight: Number(indicator.weight ?? 0) });
+      setForm({ 
+        ...indicator, 
+        target_value: Number(indicator.target_value), 
+        weight: Number(indicator.weight ?? 0),
+        q1_prog: Number(indicator.q1_prog ?? 0),
+        q2_prog: Number(indicator.q2_prog ?? 0),
+        q3_prog: Number(indicator.q3_prog ?? 0),
+        q4_prog: Number(indicator.q4_prog ?? 0),
+      });
     } else {
-      setForm({ name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, notes: '', verification_means: '', institution_id: null, instrument_id: null });
+      setForm({ 
+        name: '', description: '', unit: 'percentage', target_value: 0, weight: 0, 
+        indicator_type: 'quantitative', reporting_frequency: 'quarterly', is_active: true, 
+        notes: '', verification_means: '', institution_id: null, instrument_id: null,
+        q1_prog: 0, q2_prog: 0, q3_prog: 0, q4_prog: 0,
+        informant_id: null, reviewer_id: null
+      });
     }
   }, [indicator, open]);
 
@@ -67,7 +102,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{indicator ? 'Editar Indicador' : 'Nuevo Indicador'}</DialogTitle>
         </DialogHeader>
@@ -148,6 +183,55 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
             <Switch checked={form.is_active} onCheckedChange={v => set('is_active', v)} />
             <Label>Activo</Label>
           </div>
+          <div className="border p-4 rounded-md bg-muted/20">
+            <Label className="text-base font-semibold mb-3 block text-primary">Programación Trimestral</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { key: 'q1_prog', label: 'Primer Trimestre' },
+                { key: 'q2_prog', label: 'Segundo Trimestre' },
+                { key: 'q3_prog', label: 'Tercer Trimestre' },
+                { key: 'q4_prog', label: 'Cuarto Trimestre' }
+              ].map((m) => (
+                <div key={m.key}>
+                  <Label className="text-xs text-muted-foreground">{m.label}</Label>
+                  <Input 
+                    type="number" 
+                    value={form[m.key as keyof IndicatorValues] as number} 
+                    onChange={e => set(m.key as keyof IndicatorValues, Number(e.target.value))}
+                    className="mt-1"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Informante</Label>
+              <Select value={form.informant_id ?? '__none__'} onValueChange={v => set('informant_id', v === '__none__' ? null : v)}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar informante" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                  {profiles.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Revisor</Label>
+              <Select value={form.reviewer_id ?? '__none__'} onValueChange={v => set('reviewer_id', v === '__none__' ? null : v)}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar revisor" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Sin asignar —</SelectItem>
+                  {profiles.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Medio de Verificación</Label>
@@ -155,7 +239,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
                 value={form.verification_means ?? ''} 
                 onChange={e => set('verification_means', e.target.value)} 
                 placeholder="Documentos, reportes o fuentes de verificación..." 
-                rows={4}
+                rows={3}
               />
             </div>
             <div>
@@ -164,7 +248,7 @@ export function IndicatorDialog({ open, onOpenChange, indicator, onSave, loading
                 value={form.notes ?? ''} 
                 onChange={e => set('notes', e.target.value)} 
                 placeholder="Información adicional o notas técnicas sobre el indicador..." 
-                rows={4}
+                rows={3}
               />
             </div>
           </div>

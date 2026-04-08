@@ -11,10 +11,11 @@ import { useReports, usePeriods } from '@/hooks/useSupabaseQuery';
 import { useSubmitReport, useResubmitReport } from '@/hooks/useSupabaseMutations';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { FREQUENCY_LABELS } from '@/lib/constants';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ReportIndicatorDialog } from '@/components/dialogs/ReportIndicatorDialog';
+import { ReviewReportDialog } from '@/components/dialogs/ReviewReportDialog';
 
 export default function InboxPage() {
   const { user, userRole } = useAuth();
@@ -24,9 +25,16 @@ export default function InboxPage() {
   const submitReport = useSubmitReport();
   const resubmitReport = useResubmitReport();
 
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') ?? 'assignments';
+
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [resubmitTarget, setResubmitTarget] = useState<any>(null);
+
+  // Reviewer dialog
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
 
   const now = new Date();
   const activePeriod = (periods ?? []).find(p =>
@@ -46,12 +54,21 @@ export default function InboxPage() {
   const reviewIndicatorIds = new Set(myAsReviewer.map((a: any) => a.indicator_id));
   const reviewReports = (reports ?? []).filter(r => reviewIndicatorIds.has(r.indicator_id) && ['submitted', 'responded'].includes(r.status));
 
-  function hasReportForPeriod(assignment: any) {
+  function hasActiveReportForPeriod(assignment: any) {
     if (!activePeriod) return false;
     return (reports ?? []).some(r =>
       r.indicator_id === assignment.indicator_id &&
-      r.period_id === activePeriod.id
+      r.period_id === activePeriod.id &&
+      ['submitted', 'under_review', 'responded', 'approved'].includes(r.status)
     );
+  }
+
+  function getReportForPeriod(assignment: any) {
+    if (!activePeriod) return null;
+    return (reports ?? []).find(r =>
+      r.indicator_id === assignment.indicator_id &&
+      r.period_id === activePeriod.id
+    ) ?? null;
   }
 
   function handleOpenReport(assignment: any) {
@@ -92,7 +109,7 @@ export default function InboxPage() {
         </div>
       )}
 
-      <Tabs defaultValue="assignments" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="assignments">Mis Asignaciones</TabsTrigger>
           <TabsTrigger value="returned" className="relative">
@@ -120,8 +137,9 @@ export default function InboxPage() {
             <div className="space-y-3">
               {(assignments ?? []).map((a: any) => {
                 const isInformant = a.informant_id === user?.id;
-                const alreadyReported = hasReportForPeriod(a);
-                const canReport = isInformant && activePeriod && !alreadyReported;
+                const existingReport = getReportForPeriod(a);
+                const alreadySubmitted = hasActiveReportForPeriod(a);
+                const canReport = isInformant && activePeriod && !alreadySubmitted;
 
                 return (
                   <div
@@ -146,7 +164,10 @@ export default function InboxPage() {
                         Meta: {(a.indicators as any)?.target_value} {(a.indicators as any)?.unit}
                       </span>
                       <div className="flex items-center gap-2">
-                        {isInformant && activePeriod && (
+                        {isInformant && activePeriod && alreadySubmitted && existingReport && (
+                          <StatusBadge status={existingReport.status as any} />
+                        )}
+                        {canReport && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); handleOpenReport(a); }}>
                             <FileBarChart className="h-3.5 w-3.5 mr-1" />Reportar
                           </Button>
@@ -239,8 +260,11 @@ export default function InboxPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={r.status as any} />
-                    <Button asChild size="sm">
-                      <Link to={`/reports/${r.id}`}><Eye className="h-3.5 w-3.5 mr-1" />Revisar</Link>
+                    <Button 
+                      size="sm"
+                      onClick={() => { setSelectedReport(r); setReviewDialogOpen(true); }}
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" />Revisar
                     </Button>
                   </div>
                 </div>
@@ -259,6 +283,12 @@ export default function InboxPage() {
         onSubmit={handleSubmitReport}
         loading={submitReport.isPending || resubmitReport.isPending}
         existingReport={resubmitTarget}
+      />
+
+      <ReviewReportDialog
+        open={reviewDialogOpen}
+        onOpenChange={setReviewDialogOpen}
+        report={selectedReport}
       />
     </AppLayout>
   );

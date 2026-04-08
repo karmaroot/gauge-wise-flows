@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Paperclip, Send, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Paperclip, Send, CheckCircle, XCircle, Clock, Loader2, Download } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { useReport, useObservations, useAttachments } from '@/hooks/useSupabaseQuery';
 import { useApproveReport, useRejectReport, useRespondObservation } from '@/hooks/useSupabaseMutations';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function ReportDetail() {
   const { id } = useParams();
@@ -44,7 +47,7 @@ export default function ReportDetail() {
   const ind = report.indicators as any;
   const inst = report.institutions as any;
   const per = report.periods as any;
-  const creator = report.profiles as any;
+  const creator = report.creator as any;
 
   const isReviewer = userRole === 'reviewer' || userRole === 'admin';
   const isInformant = report.created_by === user?.id;
@@ -68,6 +71,23 @@ export default function ReportDetail() {
     setResponseText('');
     setRespondingTo(null);
   }
+
+  const handleDownload = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('verification-documents').download(filePath);
+      if (error) throw error;
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error('Error al descargar: ' + error.message);
+    }
+  };
 
   return (
     <AppLayout>
@@ -93,7 +113,7 @@ export default function ReportDetail() {
               <div><p className="text-xs text-muted-foreground mb-1">Centro de Responsabilidad</p><p className="text-sm font-medium text-foreground">{inst?.name}</p></div>
               <div><p className="text-xs text-muted-foreground mb-1">Periodo</p><p className="text-sm font-medium text-foreground">{per?.name}</p></div>
               <div><p className="text-xs text-muted-foreground mb-1">Valor Reportado</p><p className="text-2xl font-semibold text-foreground">{report.reported_value ?? '—'}</p></div>
-              <div><p className="text-xs text-muted-foreground mb-1">Meta</p><p className="text-2xl font-semibold text-muted-foreground">{ind?.target_value}</p></div>
+              <div><p className="text-xs text-muted-foreground mb-1">Programado</p><p className="text-2xl font-semibold text-muted-foreground">{ind?.target_value}</p></div>
             </div>
 
             {/* Numerator / Denominator */}
@@ -160,13 +180,13 @@ export default function ReportDetail() {
                     <div className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                          <span className="text-xs font-medium text-amber-700">{obs.profiles?.name?.[0] ?? '?'}</span>
+                          <span className="text-xs font-medium text-amber-700">{obs.reviewer?.name?.[0] ?? 'R'}</span>
                         </div>
                         {(obs.observation_responses?.length > 0 || (canRespondObs && obs.status === 'open')) && <div className="w-px flex-1 bg-border mt-2" />}
                       </div>
                       <div className="flex-1 pb-4">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-foreground">{obs.profiles?.name}</span>
+                          <span className="text-sm font-medium text-foreground">{obs.reviewer?.name || 'Revisor'}</span>
                           <StatusBadge status={obs.status} type="observation" />
                         </div>
                         <p className="text-sm text-foreground">{obs.comment}</p>
@@ -177,10 +197,10 @@ export default function ReportDetail() {
                     {obs.observation_responses?.map((resp: any) => (
                       <div key={resp.id} className="flex gap-3 ml-4">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <span className="text-xs font-medium text-primary">{resp.profiles?.name?.[0] ?? '?'}</span>
+                          <span className="text-xs font-medium text-primary">{resp.informant?.name?.[0] ?? '?' }</span>
                         </div>
                         <div className="flex-1">
-                          <span className="text-sm font-medium text-foreground">{resp.profiles?.name}</span>
+                          <span className="text-sm font-medium text-foreground">{resp.informant?.name || 'Anónimo'}</span>
                           <p className="text-sm text-foreground">{resp.comment}</p>
                           <p className="text-[10px] text-muted-foreground mt-1 font-mono">{new Date(resp.created_at).toLocaleString('es')}</p>
                         </div>
@@ -285,16 +305,45 @@ export default function ReportDetail() {
           <div className="bg-card rounded-lg shadow-card p-6">
             <h3 className="text-sm font-medium text-foreground mb-4">Evidencia Adjunta</h3>
             {(attachments ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin archivos adjuntos.</p>
+              report.verification_method ? (
+                <div className="flex items-center justify-between p-3 rounded-md bg-amber-50/50 border border-amber-100 group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Paperclip className="h-4 w-4 text-amber-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-amber-900 truncate">{report.verification_method}</p>
+                      <p className="text-[10px] text-amber-700 italic">Respaldo (Sistema anterior)</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDownload(report.verification_method!, report.verification_method!)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Sin archivos adjuntos.</p>
+              )
             ) : (
               <div className="space-y-2">
                 {attachments!.map((att: any) => (
-                  <div key={att.id} className="flex items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
-                    <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{att.file_name}</p>
-                      <p className="text-xs text-muted-foreground">{att.file_type}</p>
+                  <div key={att.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors group">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{att.file_name}</p>
+                      </div>
                     </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDownload(att.file_url, att.file_name)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>

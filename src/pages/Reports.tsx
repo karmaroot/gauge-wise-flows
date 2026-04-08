@@ -5,19 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, Search, FileBarChart, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useReports } from '@/hooks/useSupabaseQuery';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Reports() {
-  const { data: reports, isLoading } = useReports();
+  const { user, userRole } = useAuth();
+  const [searchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
+  
+  const { data: reports, isLoading } = useReports({ 
+    userId: user?.id, 
+    role: userRole
+  });
   const [search, setSearch] = useState('');
 
-  const filtered = (reports ?? []).filter(r =>
-    !search || (r.indicators as any)?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    (r.institutions as any)?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = (reports ?? []).filter(r => {
+    const matchesSearch = !search || (r.indicators as any)?.name?.toLowerCase().includes(search.toLowerCase()) ||
+                          (r.institutions as any)?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || r.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <AppLayout>

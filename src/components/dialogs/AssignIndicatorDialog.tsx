@@ -23,7 +23,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   assignment?: any;
   instrumentId: string;
-  indicators: Array<{ id: string; name: string }>;
+  indicators: any[]; // Changed to support full indicator metadata
   profiles: Array<{ id: string; name: string; email?: string | null }>;
   onSave: (values: AssignmentValues) => void;
   loading?: boolean;
@@ -53,6 +53,23 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
 
   const set = (key: keyof AssignmentValues, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
+  const handleIndicatorChange = (val: string) => {
+    set('indicator_id', val);
+    
+    // Auto-populate from indicator metadata if it's a new assignment
+    if (!assignment) {
+      const indicator = indicators.find(i => i.id === val);
+      if (indicator) {
+        if (indicator.informant_id) set('informant_id', indicator.informant_id);
+        if (indicator.reviewer_id) set('reviewer_id', indicator.reviewer_id);
+        if (indicator.reporting_frequency) {
+          // Map reporting_frequency to periodicity
+          set('periodicity', indicator.reporting_frequency);
+        }
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({ ...form, id: assignment?.id });
@@ -67,7 +84,7 @@ export function AssignIndicatorDialog({ open, onOpenChange, assignment, instrume
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Indicador</Label>
-            <Select value={form.indicator_id} onValueChange={v => set('indicator_id', v)} disabled={!!assignment}>
+            <Select value={form.indicator_id} onValueChange={handleIndicatorChange} disabled={!!assignment}>
               <SelectTrigger><SelectValue placeholder="Seleccionar indicador" /></SelectTrigger>
               <SelectContent>
                 {indicators.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}

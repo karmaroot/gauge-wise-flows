@@ -12,10 +12,20 @@ export function useInstitutions() {
   });
 }
 
-export function useIndicators() {
+export function useIndicators(filter?: { userId?: string, role?: string }) {
   return useQuery({
-    queryKey: ['indicators'],
+    queryKey: ['indicators', filter],
     queryFn: async () => {
+      if (filter?.userId && filter?.role !== 'admin') {
+        const field = filter.role === 'reviewer' ? 'reviewer_id' : 'informant_id';
+        const { data, error } = await supabase
+          .from('instrument_indicators')
+          .select('indicators(*)')
+          .eq(field, filter.userId)
+          .eq('is_active', true);
+        if (error) throw error;
+        return (data ?? []).map(d => d.indicators as any);
+      }
       const { data, error } = await supabase.from('indicators').select('*').order('name');
       if (error) throw error;
       return data;
@@ -50,14 +60,42 @@ export function useProfiles() {
   });
 }
 
-export function useReports() {
+export function useReports(filter?: { userId?: string, role?: string, status?: string | string[] }) {
   return useQuery({
-    queryKey: ['reports'],
+    queryKey: ['reports', filter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('indicator_reports')
-        .select('*, indicators(name, target_value, unit), institutions(name), periods(name)')
+        .select('*, indicators(name, description, notes, target_value, unit, indicator_type, q1_prog, q2_prog, q3_prog, q4_prog), institutions(name), periods(name)')
         .order('created_at', { ascending: false });
+
+      if (filter?.status) {
+        if (Array.isArray(filter.status)) {
+          query = query.in('status', filter.status);
+        } else {
+          query = query.eq('status', filter.status);
+        }
+      }
+
+      if (filter?.userId && filter?.role !== 'admin') {
+        // Get assigned indicators first to be safe, or filter by created_by if informant
+        // The user wants filtering by assigned indicators.
+        const field = filter.role === 'reviewer' ? 'reviewer_id' : 'informant_id';
+        const { data: assignments } = await supabase
+          .from('instrument_indicators')
+          .select('indicator_id')
+          .eq(field, filter.userId)
+          .eq('is_active', true);
+        
+        const assignedIds = (assignments ?? []).map(a => a.indicator_id);
+        if (assignedIds.length > 0) {
+          query = query.in('indicator_id', assignedIds);
+        } else {
+          return []; // No assignments, no reports
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -71,7 +109,13 @@ export function useReport(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('indicator_reports')
-        .select('*, indicators(name, description, target_value, unit), institutions(name), periods(name), profiles!indicator_reports_created_by_fkey(name)')
+        .select(`
+          *,
+          indicators(name, description, target_value, unit),
+          institutions(name),
+          periods(name),
+          creator:created_by(name)
+        `)
         .eq('id', id!)
         .maybeSingle();
       if (error) throw error;
@@ -86,7 +130,14 @@ export function useObservations(reportId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('observations')
-        .select('*, profiles!observations_user_id_fkey(name), observation_responses(*, profiles!observation_responses_user_id_fkey(name))')
+        .select(`
+          *,
+          reviewer:reviewer_id(name),
+          observation_responses(
+            *,
+            informant:user_id(name)
+          )
+        `)
         .order('created_at', { ascending: false });
       if (reportId) query = query.eq('report_id', reportId);
       const { data, error } = await query;
@@ -112,17 +163,39 @@ export function useAttachments(reportId: string | undefined) {
   });
 }
 
-export function useReportCounts() {
+export function useReportCounts(filter?: { userId?: string, role?: string }) {
   return useQuery({
-    queryKey: ['report-counts'],
+    queryKey: ['report-counts', filter],
     queryFn: async () => {
-      const { data, error } = await supabase.from('indicator_reports').select('status');
+      let query = supabase.from('indicator_reports').select('status, indicator_id');
+      
+      if (filter?.userId && filter?.role !== 'admin') {
+        const field = filter.role === 'reviewer' ? 'reviewer_id' : 'informant_id';
+        const { data: assignments } = await supabase
+          .from('instrument_indicators')
+          .select('indicator_id')
+          .eq(field, filter.userId)
+          .eq('is_active', true);
+        
+        const assignedIds = (assignments ?? []).map(a => a.indicator_id);
+        if (assignedIds.length > 0) {
+          query = query.in('indicator_id', assignedIds);
+        } else {
+          return { total: 0, draft: 0, pending: 0, submitted: 0, approved: 0, observed: 0, responded: 0 };
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       const counts = {
         total: data.length,
+        draft: data.filter(r => r.status === 'draft').length,
+        // 'pending' = all reports currently waiting for the reviewer to act
+        pending: data.filter(r => ['submitted', 'under_review', 'responded'].includes(r.status)).length,
         submitted: data.filter(r => r.status === 'submitted').length,
         approved: data.filter(r => r.status === 'approved').length,
         observed: data.filter(r => r.status === 'observed').length,
+        responded: data.filter(r => r.status === 'responded').length,
       };
       return counts;
     },

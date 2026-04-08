@@ -43,9 +43,10 @@ export function useDeleteInstitution() {
 export function useCreateIndicator() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { name: string; description?: string; unit: string; target_value: number; weight?: number; indicator_type: 'quantitative' | 'qualitative'; reporting_frequency: 'monthly' | 'quarterly' | 'annually'; is_active: boolean; institution_id?: string | null; instrument_id?: string | null }) => {
-      const { error } = await supabase.from('indicators').insert(values);
+    mutationFn: async (values: any) => {
+      const { data, error } = await supabase.from('indicators').insert(values).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['indicators'] }); toast.success('Indicador creado'); },
     onError: (e: any) => toast.error(e.message),
@@ -55,7 +56,7 @@ export function useCreateIndicator() {
 export function useUpdateIndicator() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...values }: { id: string; name: string; description?: string; unit: string; target_value: number; weight?: number; indicator_type: 'quantitative' | 'qualitative'; reporting_frequency: 'monthly' | 'quarterly' | 'annually'; is_active: boolean; institution_id?: string | null; instrument_id?: string | null }) => {
+    mutationFn: async ({ id, ...values }: any) => {
       const { error } = await supabase.from('indicators').update(values).eq('id', id);
       if (error) throw error;
     },
@@ -152,22 +153,77 @@ export function useSubmitReport() {
       reporting_month: string;
       comment: string;
       verification_method?: string;
+      verification_file?: File | null;
       created_by: string;
     }) => {
-      const { error } = await supabase.from('indicator_reports').insert({
-        indicator_id: values.indicator_id,
-        institution_id: values.institution_id,
-        period_id: values.period_id,
-        numerator: values.numerator,
-        denominator: values.denominator,
-        reported_value: values.reported_value,
-        reporting_month: values.reporting_month,
-        comment: values.comment || null,
-        verification_method: values.verification_method || null,
-        created_by: values.created_by,
-        status: 'submitted',
-      });
-      if (error) throw error;
+      let reportId = '';
+      
+      // 1. Check if a report already exists for this indicator + period
+      const { data: existing } = await supabase
+        .from('indicator_reports')
+        .select('id')
+        .eq('indicator_id', values.indicator_id)
+        .eq('period_id', values.period_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        // Update the existing report instead of creating a duplicate
+        const { error } = await supabase.from('indicator_reports').update({
+          institution_id: values.institution_id,
+          numerator: values.numerator,
+          denominator: values.denominator,
+          reported_value: values.reported_value,
+          reporting_month: values.reporting_month,
+          comment: values.comment || null,
+          verification_method: values.verification_method || null,
+          status: 'submitted',
+          updated_at: new Date().toISOString(),
+        }).eq('id', existing.id);
+        if (error) throw error;
+        reportId = existing.id;
+      } else {
+        // No previous report — insert a new one
+        const { data: newReport, error } = await supabase.from('indicator_reports').insert({
+          indicator_id: values.indicator_id,
+          institution_id: values.institution_id,
+          period_id: values.period_id,
+          numerator: values.numerator,
+          denominator: values.denominator,
+          reported_value: values.reported_value,
+          reporting_month: values.reporting_month,
+          comment: values.comment || null,
+          verification_method: values.verification_method || null,
+          created_by: values.created_by,
+          status: 'submitted',
+        }).select('id').single();
+        if (error) throw error;
+        reportId = newReport.id;
+      }
+
+      // 2. Handle File Upload if present
+      if (values.verification_file && reportId) {
+        const file = values.verification_file;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${reportId}/${Date.now()}_${file.name}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('verification-documents')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 3. Create attachment record
+        const { error: attachError } = await supabase.from('attachments').insert({
+          report_id: reportId,
+          file_url: filePath,
+          file_name: file.name,
+          file_type: file.type,
+          // DB handles uploaded_by with auth.uid()
+        });
+
+        if (attachError) throw attachError;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reports'] });
@@ -182,13 +238,15 @@ export function useSubmitReport() {
 export function useResubmitReport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ reportId, ...values }: {
+    mutationFn: async (values: {
       reportId: string;
       numerator: number;
       denominator: number;
       reported_value: number;
       comment: string;
       verification_method?: string;
+      verification_file?: File | null;
+      userId?: string;
     }) => {
       const { error } = await supabase.from('indicator_reports').update({
         numerator: values.numerator,
@@ -198,8 +256,31 @@ export function useResubmitReport() {
         verification_method: values.verification_method || null,
         status: 'responded',
         updated_at: new Date().toISOString(),
-      }).eq('id', reportId);
+      }).eq('id', values.reportId);
       if (error) throw error;
+
+      // Handle File Upload for Resubmission
+      if (values.verification_file && values.reportId) {
+        const file = values.verification_file;
+        const fileName = `${values.reportId}/${Date.now()}_${file.name}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('verification-documents')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: attachError } = await supabase.from('attachments').insert({
+          report_id: values.reportId,
+          file_url: filePath,
+          file_name: file.name,
+          file_type: file.type,
+          // DB handles uploaded_by with auth.uid()
+        });
+
+        if (attachError) throw attachError;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reports'] });
@@ -226,7 +307,8 @@ export function useApproveReport() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reports'] });
       qc.invalidateQueries({ queryKey: ['report'] });
-      toast.success('Reporte aprobado');
+      qc.invalidateQueries({ queryKey: ['report-counts'] });
+      toast.success('Reporte aprobado — Aprobado por AGE');
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -240,7 +322,7 @@ export function useRejectReport() {
       // Create observation
       const { error: obsErr } = await supabase.from('observations').insert({
         report_id: reportId,
-        user_id: userId,
+        reviewer_id: userId,
         comment,
         status: 'open',
       });
@@ -257,7 +339,8 @@ export function useRejectReport() {
       qc.invalidateQueries({ queryKey: ['reports'] });
       qc.invalidateQueries({ queryKey: ['report'] });
       qc.invalidateQueries({ queryKey: ['observations'] });
-      toast.success('Reporte devuelto con observaciones');
+      qc.invalidateQueries({ queryKey: ['report-counts'] });
+      toast.success('Reporte rechazado — notificación enviada al informante');
     },
     onError: (e: any) => toast.error(e.message),
   });

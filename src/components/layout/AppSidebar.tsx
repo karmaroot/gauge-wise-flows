@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { BRANDING } from '@/config/branding';
 
 const mainNav = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -49,19 +50,15 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         {!collapsed ? (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-inner bg-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary-foreground">SG</span>
-            </div>
+            <img src={BRANDING.assets.logo} alt={`${BRANDING.institution.shortName} Logo`} className="h-8 w-8 rounded-inner object-contain" />
             <div>
-              <p className="text-sm font-semibold text-sidebar-foreground">Área de Gestión Estratégica Comisión Nacional de Riego</p>
-              <p className="text-[10px] text-muted-foreground leading-none">Sistema de Gestión de Indicadores</p>
+              <p className="text-sm font-semibold text-sidebar-foreground leading-tight">{BRANDING.institution.name}</p>
+              <p className="text-[10px] text-muted-foreground leading-none">{BRANDING.institution.parent}</p>
             </div>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="h-8 w-8 rounded-inner bg-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary-foreground">SG</span>
-            </div>
+            <img src={BRANDING.assets.logo} alt={`${BRANDING.institution.shortName} Logo`} className="h-8 w-8 rounded-inner object-contain" />
           </div>
         )}
       </SidebarHeader>
@@ -142,7 +139,7 @@ export function AppSidebar() {
           {!collapsed && <span className="ml-2">Cerrar Sesión</span>}
         </Button>
         {!collapsed && (
-          <p className="text-[10px] text-muted-foreground text-center">Área de Gestión Estratégica Comisión Nacional de Riego v1.0</p>
+          <p className="text-[10px] text-muted-foreground text-center">{BRANDING.institution.name} {BRANDING.institution.parent} {BRANDING.system.version}</p>
         )}
       </SidebarFooter>
     </Sidebar>

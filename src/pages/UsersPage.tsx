@@ -44,22 +44,16 @@ export default function UsersPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke('create-user', {
-        body: { email: values.email, password: values.password, name: values.name },
+        body: { 
+          email: values.email, 
+          password: values.password, 
+          name: values.name,
+          role: values.role,
+          institution_id: values.institution_id
+        },
       });
       if (res.error) throw new Error(res.error.message ?? 'Error al crear usuario');
       if (res.data?.error) throw new Error(res.data.error);
-
-      const newUserId = res.data.user.id;
-
-      // Update profile with institution if provided
-      if (values.institution_id) {
-        await supabase.from('profiles').update({ institution_id: values.institution_id }).eq('id', newUserId);
-      }
-
-      // Update role if not default informant
-      if (values.role !== 'informant') {
-        await supabase.from('user_roles').update({ role: values.role as any }).eq('user_id', newUserId);
-      }
 
       qc.invalidateQueries({ queryKey: ['profiles'] });
       toast.success('Usuario creado exitosamente');

@@ -12,6 +12,7 @@ import { InstrumentDialog } from '@/components/dialogs/InstrumentDialog';
 import { AssignIndicatorDialog } from '@/components/dialogs/AssignIndicatorDialog';
 import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
 import { FREQUENCY_LABELS } from '@/lib/constants';
+import { toast } from 'sonner';
 
 export default function InstitutionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -116,9 +117,38 @@ export default function InstitutionDetail() {
             <>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Indicadores Asignados</h3>
-                <Button size="sm" onClick={() => { setEditingAssign(null); setAssignDialog(true); }}>
-                  <LinkIcon className="h-3.5 w-3.5 mr-1" />Asignar Indicador
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    const unassigned = (indicators ?? []).filter(ind => 
+                      ind.institution_id === id && 
+                      ind.instrument_id === selectedInstrument &&
+                      !assignments?.some((a: any) => a.indicator_id === ind.id)
+                    );
+                    
+                    if (unassigned.length === 0) {
+                      toast.info("No hay indicadores pendientes de vincular para este instrumento.");
+                      return;
+                    }
+
+                    for (const ind of unassigned) {
+                      await createAssign.mutateAsync({
+                        instrument_id: selectedInstrument!,
+                        indicator_id: ind.id,
+                        informant_id: ind.informant_id!,
+                        reviewer_id: ind.reviewer_id!,
+                        periodicity: ind.reporting_frequency,
+                        auto_start: true,
+                        unit_area: ""
+                      });
+                    }
+                    toast.success(`${unassigned.length} indicadores vinculados automáticamente.`);
+                  }} disabled={createAssign.isPending}>
+                    Vincular Pendientes
+                  </Button>
+                  <Button size="sm" onClick={() => { setEditingAssign(null); setAssignDialog(true); }}>
+                    <LinkIcon className="h-3.5 w-3.5 mr-1" />Asignar Indicador
+                  </Button>
+                </div>
               </div>
               {assignLoading ? (
                 <Skeleton className="h-40 rounded-lg" />
@@ -176,7 +206,7 @@ export default function InstitutionDetail() {
       </div>
 
       <InstrumentDialog open={instrDialog} onOpenChange={setInstrDialog} instrument={editingInstr} institutionId={id!} onSave={handleSaveInstrument} loading={createInstr.isPending || updateInstr.isPending} />
-      <AssignIndicatorDialog open={assignDialog} onOpenChange={setAssignDialog} assignment={editingAssign} instrumentId={selectedInstrument ?? ''} indicators={(indicators ?? []).map(i => ({ id: i.id, name: i.name }))} profiles={profileList} onSave={handleSaveAssignment} loading={createAssign.isPending || updateAssign.isPending} />
+      <AssignIndicatorDialog open={assignDialog} onOpenChange={setAssignDialog} assignment={editingAssign} instrumentId={selectedInstrument ?? ''} indicators={indicators ?? []} profiles={profileList} onSave={handleSaveAssignment} loading={createAssign.isPending || updateAssign.isPending} />
       <DeleteConfirmDialog open={!!deleteInstrTarget} onOpenChange={() => setDeleteInstrTarget(null)} title="¿Eliminar instrumento?" description="Se eliminará el instrumento y todas sus asignaciones." onConfirm={() => { if (deleteInstrTarget) deleteInstr.mutate(deleteInstrTarget, { onSuccess: () => { setDeleteInstrTarget(null); if (selectedInstrument === deleteInstrTarget) setSelectedInstrument(null); } }); }} loading={deleteInstr.isPending} />
       <DeleteConfirmDialog open={!!deleteAssignTarget} onOpenChange={() => setDeleteAssignTarget(null)} title="¿Eliminar asignación?" description="Se eliminará la asignación de este indicador." onConfirm={() => { if (deleteAssignTarget) deleteAssign.mutate(deleteAssignTarget, { onSuccess: () => setDeleteAssignTarget(null) }); }} loading={deleteAssign.isPending} />
     </AppLayout>

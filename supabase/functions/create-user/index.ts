@@ -37,9 +37,10 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: callerId, _role: "admin" });
     if (!isAdmin) throw new Error("Not authorized");
 
-    const { email, password, name } = await req.json();
+    const { email, password, name, role, institution_id } = await req.json();
     if (!email || !password || !name) throw new Error("email, password, and name are required");
 
+    console.log(`Creating user: ${email} with name: ${name}`);
     const { data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -49,10 +50,33 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    const newUserId = data.user.id;
+
+    // Wait a brief moment to ensure trigger has run
+    // Update profile (handling the default 'informant' role and NULL institution)
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .update({ 
+        name, 
+        role: role || 'informant',
+        institution_id: institution_id || null 
+      })
+      .eq('id', newUserId);
+    
+    if (profileError) console.error("Error updating profile:", profileError);
+
+    // Update user_roles table if role is different from default informant
+    const { error: roleError } = await adminClient
+      .from('user_roles')
+      .upsert({ user_id: newUserId, role: role || 'informant' }, { onConflict: 'user_id' });
+    
+    if (roleError) console.error("Error updating user_roles:", roleError);
+
     return new Response(JSON.stringify({ user: data.user }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("Error in create-user function:", e.message);
     return new Response(JSON.stringify({ error: e.message }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

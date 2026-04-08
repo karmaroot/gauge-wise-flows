@@ -5,53 +5,141 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { INDICATOR_TYPE_LABELS, FREQUENCY_LABELS } from '@/lib/constants';
-import { useIndicators, useInstitutions } from '@/hooks/useSupabaseQuery';
-import { useInstruments } from '@/hooks/useInstruments';
+import { useIndicators, useInstitutions, useProfiles } from '@/hooks/useSupabaseQuery';
+import { useInstruments, useCreateInstrumentIndicator } from '@/hooks/useInstruments';
 import { useCreateIndicator, useUpdateIndicator, useDeleteIndicator } from '@/hooks/useSupabaseMutations';
 import { Skeleton } from '@/components/ui/skeleton';
 import { IndicatorDialog } from '@/components/dialogs/IndicatorDialog';
 import { DeleteConfirmDialog } from '@/components/dialogs/DeleteConfirmDialog';
+import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Indicators() {
-  const { data: indicators, isLoading } = useIndicators();
+  const { user, userRole } = useAuth();
+  const { data: indicators, isLoading } = useIndicators({ userId: user?.id, role: userRole });
   const { data: institutions } = useInstitutions();
   const { data: instruments } = useInstruments();
+  const { data: profiles } = useProfiles();
   const createMut = useCreateIndicator();
   const updateMut = useUpdateIndicator();
   const deleteMut = useDeleteIndicator();
 
   const [search, setSearch] = useState('');
+  const [instrumentFilter, setInstrumentFilter] = useState<string>('all');
+  const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const filtered = (indicators ?? []).filter(ind =>
-    !search || ind.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   const institutionMap = Object.fromEntries((institutions ?? []).map(i => [i.id, i.name]));
   const instrumentMap = Object.fromEntries((instruments ?? []).map(i => [i.id, i.name]));
 
-  const handleSave = (values: any) => {
+  const filtered = (indicators ?? []).filter(ind => {
+    const matchesSearch = !search || ind.name.toLowerCase().includes(search.toLowerCase());
+    const instName = ind.instrument_id ? instrumentMap[ind.instrument_id] : null;
+    const matchesInstrument = instrumentFilter === 'all' || instName === instrumentFilter;
+    const matchesInstitution = institutionFilter === 'all' || ind.institution_id === institutionFilter;
+    return matchesSearch && matchesInstrument && matchesInstitution;
+  });
+
+  // Get unique instrument names for the filter
+  const uniqueInstrumentNames = Array.from(new Set((instruments ?? []).map((i: any) => i.name))).sort();
+
+  const { mutateAsync: createAssign } = useCreateInstrumentIndicator();
+
+  const handleSave = async (values: any) => {
     if (values.id) {
       updateMut.mutate(values, { onSuccess: () => setDialogOpen(false) });
     } else {
       const { id, ...rest } = values;
-      createMut.mutate(rest, { onSuccess: () => setDialogOpen(false) });
+      const newIndicator = await createMut.mutateAsync(rest);
+      
+      // Auto-assign if instrument and roles are present
+      if (newIndicator && values.instrument_id && values.informant_id && values.reviewer_id) {
+        try {
+          await createAssign({
+            instrument_id: values.instrument_id,
+            indicator_id: newIndicator.id,
+            informant_id: values.informant_id,
+            reviewer_id: values.reviewer_id,
+            periodicity: values.reporting_frequency || 'quarterly',
+            auto_start: true,
+            unit_area: ""
+          });
+          toast.success("Indicador creado y asignado automáticamente.");
+        } catch (err) {
+          console.error("Error in auto-assignment:", err);
+          toast.error("Indicador creado, pero falló la asignación automática.");
+        }
+      } else {
+        toast.success("Indicador creado exitosamente.");
+      }
+      setDialogOpen(false);
     }
   };
 
   return (
     <AppLayout>
       <PageHeader title="Indicadores" description="Gestión de indicadores institucionales">
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-2" />Nuevo Indicador</Button>
+        {userRole === 'admin' && (
+          <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />Nuevo Indicador
+          </Button>
+        )}
       </PageHeader>
 
       <div className="bg-card rounded-lg shadow-card">
-        <div className="p-4 border-b flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar indicadores..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-1 items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar indicadores..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            
+            <div className="w-[200px]">
+              <Select value={instrumentFilter} onValueChange={setInstrumentFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por instrumento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los instrumentos</SelectItem>
+                  {uniqueInstrumentNames.map((name: string) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {userRole !== 'informant' && (
+              <div className="w-[200px]">
+                <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Centro de Responsabilidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los CdR</SelectItem>
+                    {(institutions ?? []).map((inst: any) => (
+                      <SelectItem key={inst.id} value={inst.id}>
+                        {inst.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="text-sm text-muted-foreground font-medium whitespace-nowrap">
+            {filtered.length} {filtered.length === 1 ? 'indicador encontrado' : 'indicadores encontrados'}
           </div>
         </div>
         {isLoading ? (
@@ -70,7 +158,7 @@ export default function Indicators() {
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Tipo</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Frecuencia</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-6 py-3">Estado</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Acciones</th>
+                  {userRole === 'admin' && <th className="text-right text-xs font-medium text-muted-foreground px-6 py-3">Acciones</th>}
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -89,16 +177,18 @@ export default function Indicators() {
                         {ind.is_active ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(ind); setDialogOpen(true); }}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ind.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </td>
+                    {userRole === 'admin' && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditing(ind); setDialogOpen(true); }}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(ind.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -115,6 +205,7 @@ export default function Indicators() {
         loading={createMut.isPending || updateMut.isPending}
         institutions={institutions ?? []}
         instruments={(instruments ?? []) as any}
+        profiles={profiles ?? []}
       />
       <DeleteConfirmDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)} title="¿Eliminar indicador?" description="Se eliminará permanentemente este indicador." onConfirm={() => { if (deleteTarget) deleteMut.mutate(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }} loading={deleteMut.isPending} />
     </AppLayout>

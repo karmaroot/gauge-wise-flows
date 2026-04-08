@@ -16,43 +16,33 @@ export type Database = {
     Tables: {
       attachments: {
         Row: {
-          created_at: string
-          file_name: string
+          created_at: string | null
+          file_name: string | null
           file_type: string | null
-          file_url: string
+          file_url: string | null
           id: string
-          observation_id: string | null
-          report_id: string
-          uploaded_by: string
+          report_id: string | null
+          uploaded_by: string | null
         }
         Insert: {
-          created_at?: string
-          file_name: string
+          created_at?: string | null
+          file_name?: string | null
           file_type?: string | null
-          file_url: string
+          file_url?: string | null
           id?: string
-          observation_id?: string | null
-          report_id: string
-          uploaded_by: string
+          report_id?: string | null
+          uploaded_by?: string | null
         }
         Update: {
-          created_at?: string
-          file_name?: string
+          created_at?: string | null
+          file_name?: string | null
           file_type?: string | null
-          file_url?: string
+          file_url?: string | null
           id?: string
-          observation_id?: string | null
-          report_id?: string
-          uploaded_by?: string
+          report_id?: string | null
+          uploaded_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "attachments_observation_id_fkey"
-            columns: ["observation_id"]
-            isOneToOne: false
-            referencedRelation: "observations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "attachments_report_id_fkey"
             columns: ["report_id"]
@@ -92,56 +82,56 @@ export type Database = {
       indicator_reports: {
         Row: {
           comment: string | null
-          created_at: string
-          created_by: string
+          created_at: string | null
+          created_by: string | null
           denominator: number | null
           id: string
-          indicator_id: string
-          institution_id: string
+          indicator_id: string | null
+          institution_id: string | null
           numerator: number | null
-          period_id: string
+          period_id: string | null
           reported_value: number | null
           reporting_month: string | null
           returned_at: string | null
           reviewed_at: string | null
-          status: Database["public"]["Enums"]["report_status"]
-          updated_at: string
+          status: string | null
+          updated_at: string | null
           verification_method: string | null
         }
         Insert: {
           comment?: string | null
-          created_at?: string
-          created_by: string
+          created_at?: string | null
+          created_by?: string | null
           denominator?: number | null
           id?: string
-          indicator_id: string
-          institution_id: string
+          indicator_id?: string | null
+          institution_id?: string | null
           numerator?: number | null
-          period_id: string
+          period_id?: string | null
           reported_value?: number | null
           reporting_month?: string | null
           returned_at?: string | null
           reviewed_at?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          updated_at?: string
+          status?: string | null
+          updated_at?: string | null
           verification_method?: string | null
         }
         Update: {
           comment?: string | null
-          created_at?: string
-          created_by?: string
+          created_at?: string | null
+          created_by?: string | null
           denominator?: number | null
           id?: string
-          indicator_id?: string
-          institution_id?: string
+          indicator_id?: string | null
+          institution_id?: string | null
           numerator?: number | null
-          period_id?: string
+          period_id?: string | null
           reported_value?: number | null
           reporting_month?: string | null
           returned_at?: string | null
           reviewed_at?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          updated_at?: string
+          status?: string | null
+          updated_at?: string | null
           verification_method?: string | null
         }
         Relationships: [
@@ -170,54 +160,79 @@ export type Database = {
       }
       indicators: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
-          indicator_type: Database["public"]["Enums"]["indicator_type"]
+          indicator_type: string | null
+          informant_id: string | null
           institution_id: string | null
           instrument_id: string | null
-          is_active: boolean
-          name: string
+          is_active: boolean | null
+          name: string | null
           notes: string | null
-          reporting_frequency: Database["public"]["Enums"]["reporting_frequency"]
-          target_value: number
-          unit: string
+          q1_prog: number | null
+          q2_prog: number | null
+          q3_prog: number | null
+          q4_prog: number | null
+          reporting_frequency: string | null
+          reviewer_id: string | null
+          target_value: number | null
+          unit: string | null
           verification_means: string | null
           weight: number
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          indicator_type?: string | null
+          informant_id?: string | null
           institution_id?: string | null
           instrument_id?: string | null
-          is_active?: boolean
-          name: string
+          is_active?: boolean | null
+          name?: string | null
           notes?: string | null
-          reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
-          target_value?: number
-          unit?: string
+          q1_prog?: number | null
+          q2_prog?: number | null
+          q3_prog?: number | null
+          q4_prog?: number | null
+          reporting_frequency?: string | null
+          reviewer_id?: string | null
+          target_value?: number | null
+          unit?: string | null
           verification_means?: string | null
           weight?: number
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          indicator_type?: Database["public"]["Enums"]["indicator_type"]
+          indicator_type?: string | null
+          informant_id?: string | null
           institution_id?: string | null
           instrument_id?: string | null
-          is_active?: boolean
-          name?: string
+          is_active?: boolean | null
+          name?: string | null
           notes?: string | null
-          reporting_frequency?: Database["public"]["Enums"]["reporting_frequency"]
-          target_value?: number
-          unit?: string
+          q1_prog?: number | null
+          q2_prog?: number | null
+          q3_prog?: number | null
+          q4_prog?: number | null
+          reporting_frequency?: string | null
+          reviewer_id?: string | null
+          target_value?: number | null
+          unit?: string | null
           verification_means?: string | null
           weight?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "indicators_informant_id_fkey"
+            columns: ["informant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "indicators_institution_id_fkey"
             columns: ["institution_id"]
@@ -232,26 +247,33 @@ export type Database = {
             referencedRelation: "instruments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "indicators_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       institutions: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          name: string
-          type: Database["public"]["Enums"]["institution_type"]
+          name: string | null
+          type: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          name: string
-          type?: Database["public"]["Enums"]["institution_type"]
+          name?: string | null
+          type?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          name?: string
-          type?: Database["public"]["Enums"]["institution_type"]
+          name?: string | null
+          type?: string | null
         }
         Relationships: []
       }
@@ -366,25 +388,25 @@ export type Database = {
       }
       observation_responses: {
         Row: {
-          comment: string
-          created_at: string
+          comment: string | null
+          created_at: string | null
           id: string
-          observation_id: string
-          user_id: string
+          observation_id: string | null
+          user_id: string | null
         }
         Insert: {
-          comment: string
-          created_at?: string
+          comment?: string | null
+          created_at?: string | null
           id?: string
-          observation_id: string
-          user_id: string
+          observation_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          comment?: string
-          created_at?: string
+          comment?: string | null
+          created_at?: string | null
           id?: string
-          observation_id?: string
-          user_id?: string
+          observation_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -398,28 +420,28 @@ export type Database = {
       }
       observations: {
         Row: {
-          comment: string
-          created_at: string
+          comment: string | null
+          created_at: string | null
           id: string
-          report_id: string
-          status: Database["public"]["Enums"]["observation_status"]
-          user_id: string
+          report_id: string | null
+          reviewer_id: string | null
+          status: string | null
         }
         Insert: {
-          comment: string
-          created_at?: string
+          comment?: string | null
+          created_at?: string | null
           id?: string
-          report_id: string
-          status?: Database["public"]["Enums"]["observation_status"]
-          user_id: string
+          report_id?: string | null
+          reviewer_id?: string | null
+          status?: string | null
         }
         Update: {
-          comment?: string
-          created_at?: string
+          comment?: string | null
+          created_at?: string | null
           id?: string
-          report_id?: string
-          status?: Database["public"]["Enums"]["observation_status"]
-          user_id?: string
+          report_id?: string | null
+          reviewer_id?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -433,59 +455,54 @@ export type Database = {
       }
       periods: {
         Row: {
-          end_date: string
+          end_date: string | null
           id: string
-          name: string
-          start_date: string
-          status: Database["public"]["Enums"]["period_status"]
+          name: string | null
+          start_date: string | null
+          status: string | null
         }
         Insert: {
-          end_date: string
+          end_date?: string | null
           id?: string
-          name: string
-          start_date: string
-          status?: Database["public"]["Enums"]["period_status"]
+          name?: string | null
+          start_date?: string | null
+          status?: string | null
         }
         Update: {
-          end_date?: string
+          end_date?: string | null
           id?: string
-          name?: string
-          start_date?: string
-          status?: Database["public"]["Enums"]["period_status"]
+          name?: string | null
+          start_date?: string | null
+          status?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          created_at: string
+          created_at: string | null
           email: string | null
           id: string
           institution_id: string | null
-          name: string
+          name: string | null
+          role: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           id: string
           institution_id?: string | null
-          name: string
+          name?: string | null
+          role?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           id?: string
           institution_id?: string | null
-          name?: string
+          name?: string | null
+          role?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -520,7 +537,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "reviewer" | "informant"
-      indicator_type: "quantitative" | "qualitative" | "quantity"
+      indicator_type: "quantitative" | "qualitative" | "Cantidad" | "quantity"
       institution_type: "public" | "private" | "autonomous"
       observation_status: "open" | "answered" | "closed"
       period_status: "open" | "closed"
@@ -661,7 +678,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "reviewer", "informant"],
-      indicator_type: ["quantitative", "qualitative", "quantity"],
+      indicator_type: ["quantitative", "qualitative", "Cantidad", "quantity"],
       institution_type: ["public", "private", "autonomous"],
       observation_status: ["open", "answered", "closed"],
       period_status: ["open", "closed"],

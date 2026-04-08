@@ -40,7 +40,7 @@ export function useMyAssignments(userId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instrument_indicators')
-        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency)')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency, q1_prog, q2_prog, q3_prog, q4_prog, notes)')
         .or(`informant_id.eq.${userId},reviewer_id.eq.${userId}`)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -56,7 +56,7 @@ export function useAllInstrumentIndicators() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instrument_indicators')
-        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency), informant:profiles!instrument_indicators_informant_id_fkey(id, name), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name)')
+        .select('*, instruments(name, institution_id, institutions(name)), indicators(name, description, unit, target_value, indicator_type, reporting_frequency, q1_prog, q2_prog, q3_prog, q4_prog, notes), informant:profiles!instrument_indicators_informant_id_fkey(id, name), reviewer:profiles!instrument_indicators_reviewer_id_fkey(id, name)')
         .eq('is_active', true)
         .eq('auto_start', true)
         .order('created_at');
@@ -145,11 +145,25 @@ export function useAutoStartReports() {
   return useMutation({
     mutationFn: async (assignments: Array<{ id: string; instrument_id: string; indicator_id: string; informant_id: string; instruments: any; indicators: any }>) => {
       const now = new Date();
-      const openPeriods = await supabase.from('periods').select('*').eq('status', 'open');
-      if (openPeriods.error) throw openPeriods.error;
-      if (!openPeriods.data?.length) throw new Error('No hay periodos abiertos');
+      
+      // Try to find an open period first
+      let { data: periodData } = await supabase.from('periods').select('*').eq('status', 'open').limit(1);
+      
+      // If no open period, fallback to the most recent one (for testing purposes)
+      if (!periodData?.length) {
+        const { data: recentPeriods, error: recentError } = await supabase
+          .from('periods')
+          .select('*')
+          .order('end_date', { ascending: false })
+          .limit(1);
+        
+        if (recentError) throw recentError;
+        periodData = recentPeriods;
+      }
 
-      const period = openPeriods.data[0];
+      if (!periodData?.length) throw new Error('No hay periodos registrados en el sistema');
+
+      const period = periodData[0];
       const inserts = assignments.map(a => ({
         indicator_id: a.indicator_id,
         institution_id: (a.instruments as any)?.institution_id,
